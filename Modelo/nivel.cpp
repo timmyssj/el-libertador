@@ -47,6 +47,14 @@ void Nivel::cargarMapa(int numeroCapitulo) {
 		entidades.push_back(realista2);
 	}
 }
+void Nivel::actualizar() {
+	// Recorremos todas las entidades (Héroe y Enemigos)
+	for (Entidad* e : entidades) {
+		if (e->estaVivo()) {
+			e->actualizar(); // Polimorfismo: Cada uno hará lo suyo (IA o nada)
+		}
+	}
+}
 
 int Nivel::getContenidoCelda(int x, int y) {
 	// Validación de límites para no crashear

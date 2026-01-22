@@ -25,9 +25,22 @@ void Juego::cargarNivel(int numCap) {
 void Juego::intentarMoverSanMartin(int dx, int dy) {
 	if (juegoPausado) return; 
 	
-	// Verificamos que el héroe exista para evitar crasheos
-	if (nivelActual->getHeroe() != nullptr) {
-		nivelActual->getHeroe()->moverse(dx, dy);
+	// 1. Obtenemos al Héroe
+	SanMartin* heroe = nivelActual->getHeroe();
+	
+	if (heroe != nullptr) {
+		// 2. Calculamos A DÓNDE quiere ir (Futuro)
+		// Nota: Convertimos a int porque el mapa funciona con enteros
+		int proximoX = (int)(heroe->getX() + dx * 1.0f); // Asumiendo velocidad 1
+		int proximoY = (int)(heroe->getY() + dy * 1.0f);
+		
+		// 3. PREGUNTAMOS AL NIVEL: ¿Qué hay ahí?
+		int contenido = nivelActual->getContenidoCelda(proximoX, proximoY);
+		
+		// 4. SI NO ES PARED, nos movemos
+		if (contenido != PARED && contenido != AGUA) {
+			heroe->moverse(dx, dy);
+		}
 	}
 }
 
@@ -41,9 +54,11 @@ bool Juego::estaEnPausa() const {
 }
 
 void Juego::actualizar() {
-	// Lógica futura para actualizar enemigos
+	if (juegoPausado) return;
+	
+	// Delegamos la actualización al nivel actual
+	nivelActual->actualizar();
 }
-
 void Juego::atacarConSanMartin() {
 	// Pendiente
 }

@@ -21,6 +21,11 @@ public:
 		// Lógica específica de San Martín por frame
 	}
 	
+	//identidad
+	std::string getTipo() override {
+		return "PROCER"; // Clave para que la vista cargue la textura de San Martín
+	}
+	
 	void arengarTropa() {
 		moral += 10;
 		if(moral > 100) moral = 100;

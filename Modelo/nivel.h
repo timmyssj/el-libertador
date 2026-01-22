@@ -30,6 +30,9 @@ public:
 	// Método del diagrama: Inicializa mapa y spawnea personajes
 	void cargarMapa(int numeroCapitulo);
 	
+	//actualizar entidades del Nivel
+	void actualizar();
+	
 	// Getters para que la Vista y el Juego consulten
 	int getContenidoCelda(int x, int y);
 	

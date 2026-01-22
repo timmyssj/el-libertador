@@ -18,6 +18,11 @@ public:
 		// Aquí iría la IA automática
 	}
 	
+	//identidad
+	std::string getTipo() override {
+		return "REALISTA"; // Clave para que la vista cargue al soldado español
+	}
+	
 	bool detectarJugador(float jugadorX, float jugadorY) {
 		// Distancia euclidiana
 		float dx = x - jugadorX;

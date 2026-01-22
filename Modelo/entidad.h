@@ -1,6 +1,8 @@
 #ifndef ENTIDAD_H
 #define ENTIDAD_H
 
+#include <string>
+
 class Entidad{
 protected:
 	float x, y;
@@ -12,6 +14,9 @@ public:
 	
 	//Metodos virtuales puros
 	virtual void actualizar() = 0;
+	
+	//cada hijo debe decir que es
+	virtual std::string getTipo() = 0;
 	
 	//Getters
 	float getX() const { return x;}
