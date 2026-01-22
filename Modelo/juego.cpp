@@ -2,57 +2,32 @@
 
 // 1. Constructor
 Juego::Juego() {
-	salud = 100;
-	moral = 100;
-	suministros = 50;
-	capituloActual = 0; 
-	juegoPausado = false; 
+	nivelActual = new Nivel(); // Creamos el puntero
+	juegoPausado = false;
+	capitulo = 0;
 	
-	cargarNivel(capituloActual);
+	cargarNivel(capitulo);
 }
 
-// 2. Cargar Nivel (Con diseño del Tutorial)
-void Juego::cargarNivel(int capitulo) {
-	// Limpiamos todo a SUELO
-	for(int i = 0; i < 20; i++) {
-		for(int j = 0; j < 30; j++) {
-			mapa[i][j] = SUELO;
-		}
-	}
-	
-	// Bordes Indestructibles
-	for(int i = 0; i < 20; i++) { mapa[i][0] = PARED; mapa[i][29] = PARED; }
-	for(int j = 0; j < 30; j++) { mapa[0][j] = PARED; mapa[19][j] = PARED; }
-	
-	// Configuración del Tutorial
-	if (capitulo == 0) {
-		smX = 2; smY = 2; // Inicio
-		
-		// Muro de prueba
-		for(int i = 5; i < 15; i++) { mapa[i][10] = PARED; }
-		
-		// Zona de agua
-		mapa[5][5] = AGUA; mapa[5][6] = AGUA;
-		mapa[6][5] = AGUA; mapa[6][6] = AGUA;
-	}
+// Destructor
+Juego::~Juego() {
+	delete nivelActual;
 }
 
-// 3. Movimiento (BLINDADO: No permite salir del mapa)
-void Juego::intentarMover(int dx, int dy) {
+// 2. Cargar Nivel
+void Juego::cargarNivel(int numCap) {
+	// CORRECCIÓN: Usamos '->' porque nivelActual es un puntero.
+	// Y llamamos a 'cargarMapa' (que es el nombre real en la clase Nivel)
+	nivelActual->cargarMapa(numCap);
+}
+
+// 3. Movimiento delegando al Héroe
+void Juego::intentarMoverSanMartin(int dx, int dy) {
 	if (juegoPausado) return; 
 	
-	int nuevoX = smX + dx;
-	int nuevoY = smY + dy;
-	
-	// SEGURIDAD: Evitar que se salga de la matriz (Crasheo)
-	if (nuevoX < 0 || nuevoX >= 30 || nuevoY < 0 || nuevoY >= 20) {
-		return; 
-	}
-	
-	// LÓGICA: Chocar con pared o agua
-	if (mapa[nuevoY][nuevoX] != PARED && mapa[nuevoY][nuevoX] != AGUA) {
-		smX = nuevoX;
-		smY = nuevoY;
+	// Verificamos que el héroe exista para evitar crasheos
+	if (nivelActual->getHeroe() != nullptr) {
+		nivelActual->getHeroe()->moverse(dx, dy);
 	}
 }
 
@@ -61,19 +36,20 @@ void Juego::pausarOReanudar() {
 	juegoPausado = !juegoPausado;
 }
 
-bool Juego::estaEnPausa() {
+bool Juego::estaEnPausa() const {
 	return juegoPausado;
 }
 
 void Juego::actualizar() {
-	// Vacío por ahora, porque decidimos no poner enemigos todavía.
-	// Al estar vacío, no da error de compilación.
+	// Lógica futura para actualizar enemigos
+}
+
+void Juego::atacarConSanMartin() {
+	// Pendiente
 }
 
 // 5. Getter del mapa
 int Juego::getContenidoCelda(int x, int y) {
-	if(x >= 0 && x < 30 && y >= 0 && y < 20) {
-		return mapa[y][x];
-	}
-	return PARED; 
+	// Delegamos la pregunta al nivel usando la flecha
+	return nivelActual->getContenidoCelda(x, y);
 }
