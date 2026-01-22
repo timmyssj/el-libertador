@@ -1,5 +1,4 @@
 #include "juego.h"
-#include <cmath>
 
 // 1. Constructor
 Juego::Juego() {
@@ -12,7 +11,7 @@ Juego::Juego() {
 	cargarNivel(capituloActual);
 }
 
-// 2. Cargar Nivel
+// 2. Cargar Nivel (Con diseño del Tutorial)
 void Juego::cargarNivel(int capitulo) {
 	// Limpiamos todo a SUELO
 	for(int i = 0; i < 20; i++) {
@@ -21,45 +20,43 @@ void Juego::cargarNivel(int capitulo) {
 		}
 	}
 	
-	// Bordes (PARED)
+	// Bordes Indestructibles
 	for(int i = 0; i < 20; i++) { mapa[i][0] = PARED; mapa[i][29] = PARED; }
 	for(int j = 0; j < 30; j++) { mapa[0][j] = PARED; mapa[19][j] = PARED; }
 	
-	// Posición inicial
-	smX = 5; 
-	smY = 5;
-	
-	// Limpiamos enemigos viejos
-	realistas.clear();
-	
-	if (capitulo == 0) { // Tutorial
-		smX = 5; smY = 5;
+	// Configuración del Tutorial
+	if (capitulo == 0) {
+		smX = 2; smY = 2; // Inicio
 		
-		// SPAWN DE ENEMIGO DE PRUEBA
-		Enemigo soldado;
-		soldado.x = 15;
-		soldado.y = 10;
-		soldado.salud = 30;
-		soldado.contadorPasos = 0;
-		realistas.push_back(soldado); // Lo guardamos en la lista
+		// Muro de prueba
+		for(int i = 5; i < 15; i++) { mapa[i][10] = PARED; }
+		
+		// Zona de agua
+		mapa[5][5] = AGUA; mapa[5][6] = AGUA;
+		mapa[6][5] = AGUA; mapa[6][6] = AGUA;
 	}
 }
 
-// 3. Movimiento
+// 3. Movimiento (BLINDADO: No permite salir del mapa)
 void Juego::intentarMover(int dx, int dy) {
 	if (juegoPausado) return; 
 	
 	int nuevoX = smX + dx;
 	int nuevoY = smY + dy;
 	
-	// Validación simple de colisión
-	if (mapa[nuevoY][nuevoX] != PARED) {
+	// SEGURIDAD: Evitar que se salga de la matriz (Crasheo)
+	if (nuevoX < 0 || nuevoX >= 30 || nuevoY < 0 || nuevoY >= 20) {
+		return; 
+	}
+	
+	// LÓGICA: Chocar con pared o agua
+	if (mapa[nuevoY][nuevoX] != PARED && mapa[nuevoY][nuevoX] != AGUA) {
 		smX = nuevoX;
 		smY = nuevoY;
 	}
 }
 
-// 4. Pausa
+// 4. Funciones de Control
 void Juego::pausarOReanudar() {
 	juegoPausado = !juegoPausado;
 }
@@ -68,36 +65,15 @@ bool Juego::estaEnPausa() {
 	return juegoPausado;
 }
 
-// 5. Actualizar (Esta función faltaba y daba error)
 void Juego::actualizar() {
-	if (juegoPausado) return;
-	
-	// Recorremos la lista de enemigos para moverlos uno por uno
-	for (size_t i = 0; i < realistas.size(); i++) {
-		Enemigo& e = realistas[i]; // Referencia para modificarlo
-		
-		// Truco para que se muevan más lento que San Martín (cada 10 frames del juego)
-		e.contadorPasos++;
-		if (e.contadorPasos < 10) continue; 
-		e.contadorPasos = 0; // Reseteamos contador
-		
-		// IA BÁSICA: PERSECUCIÓN
-		// Calculamos hacia dónde ir para acercarse a San Martín
-		int dx = 0;
-		int dy = 0;
-		
-		if (e.x < smX) dx = 1;  // Si San Martín está a la derecha, voy derecha
-		if (e.x > smX) dx = -1; // Si está a la izquierda, voy izquierda
-		if (e.y < smY) dy = 1;  // Idem arriba/abajo
-		if (e.y > smY) dy = -1;
-		
-		// Intentamos mover en X primero
-		if (mapa[e.y][e.x + dx] != PARED) {
-			e.x += dx;
-		} 
-		// Si no, intentamos en Y
-		else if (mapa[e.y + dy][e.x] != PARED) {
-			e.y += dy;
-		}
+	// Vacío por ahora, porque decidimos no poner enemigos todavía.
+	// Al estar vacío, no da error de compilación.
+}
+
+// 5. Getter del mapa
+int Juego::getContenidoCelda(int x, int y) {
+	if(x >= 0 && x < 30 && y >= 0 && y < 20) {
+		return mapa[y][x];
 	}
+	return PARED; 
 }
