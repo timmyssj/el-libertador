@@ -40,18 +40,29 @@ void Nivel::cargarMapa(int numeroCapitulo) {
 		entidades.push_back(referenciaHeroe);  // Lo agregamos a la lista general
 		
 		// b) Creamos Enemigos
-		Enemigo* realista1 = new Enemigo(15, 5);
+		Enemigo* realista1 = new Enemigo(15, 5, referenciaHeroe);
 		entidades.push_back(realista1);
 		
-		Enemigo* realista2 = new Enemigo(15, 15);
+		Enemigo* realista2 = new Enemigo(15, 15, referenciaHeroe);
 		entidades.push_back(realista2);
 	}
 }
 void Nivel::actualizar() {
-	// Recorremos todas las entidades (Héroe y Enemigos)
-	for (Entidad* e : entidades) {
+	// Recorremos la lista
+	for (size_t i = 0; i < entidades.size(); i++) {
+		Entidad* e = entidades[i];
+		
 		if (e->estaVivo()) {
-			e->actualizar(); // Polimorfismo: Cada uno hará lo suyo (IA o nada)
+			e->actualizar();
+		} 
+		// NUEVO: GESTIÓN DE MUERTES
+		// Si ha muerto y NO es San Martín (queremos Game Over, no que desaparezca)
+		else if (e->getTipo() != "PROCER") {
+			// Lo borramos de la memoria
+			delete e;
+			// Lo sacamos de la lista
+			entidades.erase(entidades.begin() + i);
+			i--; // Ajustamos el índice porque la lista se achicó
 		}
 	}
 }

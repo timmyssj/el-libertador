@@ -1,7 +1,14 @@
 #ifndef JUEGO_H
 #define JUEGO_H
 
-#include "nivel.h" // Asegúrate de que coincida mayúscula/minúscula con tu archivo
+#include "Nivel.h"
+
+// NUEVO: Estados posibles del juego
+enum EstadoJuego {
+	JUGANDO,
+	GANADO,
+	PERDIDO
+};
 
 class Juego {
 private:
@@ -9,26 +16,31 @@ private:
 	int capitulo;
 	bool juegoPausado;
 	
+	// NUEVO: Variable para saber en qué estado estamos
+	EstadoJuego estadoActual;
+	
 public:
 	Juego();
-	~Juego(); // Destructor para limpiar memoria
+	~Juego();
 	
 	void cargarNivel(int numCap);
-	void actualizar(); 
 	
-	// --- CONTROLES ---
+	// Control
 	void intentarMoverSanMartin(int dx, int dy);
 	void atacarConSanMartin();
-	
-	// --- AQUÍ ESTÁ LA FUNCIÓN QUE FALTABA ---
 	void pausarOReanudar();
-	bool estaEnPausa() const; // El const ayuda a que no dé error en getters
 	
-	// --- GETTERS ---
+	// Getters
+	bool estaEnPausa() const;
+	
+	// NUEVO GETTER: Para que la Ventana sepa si debe mostrar "Game Over" o "Victoria"
+	EstadoJuego getEstado() const { return estadoActual; }
+	
 	Nivel* getNivel() { return nivelActual; }
-	
-	// Esta también faltaba declarar y daba error en el cpp
 	int getContenidoCelda(int x, int y);
+	
+	// Lógica principal
+	void actualizar(); 
 };
 
 #endif

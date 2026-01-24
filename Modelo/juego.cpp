@@ -1,10 +1,14 @@
 #include "juego.h"
+#include <cmath> 
+#include <vector>
 
-// 1. Constructor
+// 1. En el Constructor, inicializamos el estado
 Juego::Juego() {
-	nivelActual = new Nivel(); // Creamos el puntero
+	nivelActual = new Nivel(); 
 	juegoPausado = false;
 	capitulo = 0;
+	
+	estadoActual = JUGANDO; // <-- Arrancamos jugando
 	
 	cargarNivel(capitulo);
 }
@@ -53,14 +57,70 @@ bool Juego::estaEnPausa() const {
 	return juegoPausado;
 }
 
+// 2. Modificamos actualizar() para verificar victoria/derrota
 void Juego::actualizar() {
-	if (juegoPausado) return;
+	// Si ya terminó el juego o está en pausa, no hacemos nada
+	if (juegoPausado || estadoActual != JUGANDO) return;
 	
-	// Delegamos la actualización al nivel actual
+	// A. Actualizamos el mundo (Movimiento IA, etc.)
 	nivelActual->actualizar();
+	
+	// B. VERIFICAR DERROTA
+	// Si San Martín murió (vida <= 0)
+	SanMartin* heroe = nivelActual->getHeroe();
+	if (heroe == nullptr || !heroe->estaVivo()) {
+		estadoActual = PERDIDO;
+		return; // Fin del frame
+	}
+	
+	// C. VERIFICAR VICTORIA
+	// Obtenemos la posición actual del héroe
+	// Nota: Casteamos a int para usarlo en la matriz
+	int x = (int)heroe->getX();
+	int y = (int)heroe->getY();
+	
+	// Preguntamos al nivel qué hay en el suelo donde está parado el héroe
+	int terrenoBajoLosPies = nivelActual->getContenidoCelda(x, y);
+	
+	if (terrenoBajoLosPies == SALIDA_NIVEL) {
+		estadoActual = GANADO;
+	}
 }
 void Juego::atacarConSanMartin() {
-	// Pendiente
+	if (juegoPausado) return;
+	
+	// 1. Obtenemos al héroe y la lista de todos
+	SanMartin* heroe = nivelActual->getHeroe();
+	const std::vector<Entidad*>& entidades = nivelActual->getEntidades();
+	
+	if (!heroe) return;
+	
+	// 2. Buscamos víctimas cercanas
+	for (Entidad* e : entidades) {
+		// Ignoramos a San Martín (no se ataca a sí mismo)
+		if (e == heroe) continue;
+		
+		// Si la entidad es un REALISTA (usamos getTipo para saberlo)
+		if (e->getTipo() == "REALISTA" && e->estaVivo()) {
+			
+			// Calculamos distancia
+			float dx = e->getX() - heroe->getX();
+			float dy = e->getY() - heroe->getY();
+			float dist = std::sqrt(dx*dx + dy*dy);
+			
+			// RANGO DE LA ESPADA: 1.5 casillas
+			if (dist < 1.5f) {
+				// Convertimos Entidad* a Personaje* para poder dañarlo
+				// (Dynamic cast es lo seguro, pero static_cast es más rápido aquí)
+				Personaje* p = static_cast<Personaje*>(e);
+				
+				p->recibirDanio(30.0f); // ¡Golpe fuerte!
+				
+				// Opcional: Sumar moral por cada golpe
+				heroe->arengarTropa(); 
+			}
+		}
+	}
 }
 
 // 5. Getter del mapa

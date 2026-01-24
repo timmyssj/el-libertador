@@ -8,7 +8,7 @@
 
 // Reutilizamos terrenos
 enum TipoTerreno {
-	SUELO, PARED, AGUA, EVENTO, SALIDA
+	SUELO, PARED, AGUA, EVENTO_NARRATIVO, SALIDA_NIVEL
 };
 
 class Nivel {
