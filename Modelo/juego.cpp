@@ -4,15 +4,18 @@
 
 // 1. En el Constructor, inicializamos el estado
 Juego::Juego() {
-	nivelActual = new Nivel(); 
+	nivelActual = nullptr; // Aún no hay nivel cargado
 	juegoPausado = false;
 	capitulo = 0;
 	
-	estadoActual = JUGANDO; // <-- Arrancamos jugando
+	// ARRANCAMOS EN EL MENÚ
+	estadoActual = MENU_PRINCIPAL;
+	opcionSeleccionada = 0; // Primera opción marcada por defecto
 	
-	cargarNivel(capitulo);
+	// Configuración por defecto
+	volumenMusica = 50;
+	volumenSonidos = 50;
 }
-
 // Destructor
 Juego::~Juego() {
 	delete nivelActual;
@@ -27,7 +30,8 @@ void Juego::cargarNivel(int numCap) {
 
 // 3. Movimiento delegando al Héroe
 void Juego::intentarMoverSanMartin(int dx, int dy) {
-	if (juegoPausado) return; 
+	// Si no estamos jugando o no hay nivel cargado, ¡NO HACER NADA!
+	if (estadoActual != JUGANDO || nivelActual == nullptr) return;
 	
 	// 1. Obtenemos al Héroe
 	SanMartin* heroe = nivelActual->getHeroe();
@@ -59,11 +63,14 @@ bool Juego::estaEnPausa() const {
 
 // 2. Modificamos actualizar() para verificar victoria/derrota
 void Juego::actualizar() {
-	// Si ya terminó el juego o está en pausa, no hacemos nada
-	if (juegoPausado || estadoActual != JUGANDO) return;
-	
-	// A. Actualizamos el mundo (Movimiento IA, etc.)
-	nivelActual->actualizar();
+	// Si estamos en el MENÚ, no actualizamos el nivel (evitamos crash)
+		if (estadoActual == MENU_PRINCIPAL || estadoActual == PAUSA || estadoActual == CONFIGURACION) {
+		return; 
+		}
+		
+		// Solo actualizamos el nivel si estamos JUGANDO y existe el nivel
+			if (estadoActual == JUGANDO && nivelActual != nullptr) {
+			nivelActual->actualizar();
 	
 	// B. VERIFICAR DERROTA
 	// Si San Martín murió (vida <= 0)
@@ -84,6 +91,7 @@ void Juego::actualizar() {
 	
 	if (terrenoBajoLosPies == SALIDA_NIVEL) {
 		estadoActual = GANADO;
+		}
 	}
 }
 void Juego::atacarConSanMartin() {
@@ -123,6 +131,64 @@ void Juego::atacarConSanMartin() {
 	}
 }
 
+// --- LÓGICA DE NAVEGACIÓN ---
+
+void Juego::navegarMenu(int direccion) {
+	// Solo navegamos si estamos en un estado de menú
+	if (estadoActual == MENU_PRINCIPAL) {
+		opcionSeleccionada += direccion;
+		
+		// Límites del menú principal (Supongamos 3 opciones: Jugar, Config, Salir)
+		if (opcionSeleccionada < 0) opcionSeleccionada = 2;
+		if (opcionSeleccionada > 2) opcionSeleccionada = 0;
+	}
+	else if (estadoActual == CONFIGURACION) {
+		// Aquí podrías navegar entre opciones de volumen
+		opcionSeleccionada += direccion;
+		if (opcionSeleccionada < 0) opcionSeleccionada = 1;
+		if (opcionSeleccionada > 1) opcionSeleccionada = 0;
+	}
+	// Añadir lógica para SELECCION_NIVEL si quieres
+}
+
+void Juego::confirmarSeleccion() {
+	if (estadoActual == MENU_PRINCIPAL) {
+		if (opcionSeleccionada == 0) { // Opción "JUGAR"
+			estadoActual = SELECCION_NIVEL; // O ir directo a JUGANDO
+			opcionSeleccionada = 0; // Reset para el siguiente menú
+		}
+		else if (opcionSeleccionada == 1) { // Opción "CONFIGURACION"
+			estadoActual = CONFIGURACION;
+			opcionSeleccionada = 0;
+		}
+		else if (opcionSeleccionada == 2) { // Opción "SALIR"
+			estadoActual = SALIR;
+		}
+	}
+	else if (estadoActual == SELECCION_NIVEL) {
+		// Supongamos que eligió el Tutorial
+		cargarNivel(0); // Carga el mapa
+		estadoActual = JUGANDO; // ¡Arranca el juego!
+	}
+	else if (estadoActual == CONFIGURACION) {
+		// Lógica para cambiar volumen (podríamos usar flechas izq/der)
+	}
+}
+
+void Juego::teclaEscape() {
+	if (estadoActual == JUGANDO) {
+		estadoActual = PAUSA; // Pausar juego
+		juegoPausado = true;
+	}
+	else if (estadoActual == PAUSA) {
+		estadoActual = JUGANDO; // Reanudar
+		juegoPausado = false;
+	}
+	else if (estadoActual == CONFIGURACION || estadoActual == SELECCION_NIVEL) {
+		estadoActual = MENU_PRINCIPAL; // Volver atrás
+		opcionSeleccionada = 0;
+	}
+}
 // 5. Getter del mapa
 int Juego::getContenidoCelda(int x, int y) {
 	// Delegamos la pregunta al nivel usando la flecha
