@@ -33,6 +33,9 @@ public:
 	//actualizar entidades del Nivel
 	void actualizar();
 	
+	//saber si hay enemigos
+	bool hayEnemigosVivos();
+	
 	// Getters para que la Vista y el Juego consulten
 	int getContenidoCelda(int x, int y);
 	

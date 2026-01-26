@@ -1,196 +1,259 @@
 #include "juego.h"
-#include <cmath> 
+#include <iostream>
+#include <cmath>
 #include <vector>
+#include <string> // <--- IMPORTANTE: Necesario para std::to_string
 
-// 1. En el Constructor, inicializamos el estado
+// 1. CONSTRUCTOR
 Juego::Juego() {
-	nivelActual = nullptr; // Aún no hay nivel cargado
-	juegoPausado = false;
-	capitulo = 0;
+	estadoActual = EN_MENU;
+	estadoAnterior = EN_MENU;
 	
-	// ARRANCAMOS EN EL MENÚ
-	estadoActual = MENU_PRINCIPAL;
-	opcionSeleccionada = 0; // Primera opción marcada por defecto
-	
-	// Configuración por defecto
 	volumenMusica = 50;
 	volumenSonidos = 50;
+	
+	// Opciones iniciales
+	menuPrincipal = new Menu({"COMENZAR CAMPAÑA", "CONFIGURACION", "SALIR"});
+	menuPausa = new Menu({"CONTINUAR", "CONFIGURACION", "SALIR AL MENU"});
+	
+	// Creamos el menú config. La función actualizarTextosConfig pondrá los números.
+	menuConfig = new Menu({"Musica", "Sonidos", "Volver"}); 
+	actualizarTextosConfig(); 
+	
+	nivelActual = nullptr;
 }
-// Destructor
+
+// 2. DESTRUCTOR
 Juego::~Juego() {
-	delete nivelActual;
+	delete menuPrincipal;
+	delete menuPausa;
+	delete menuConfig; // No olvidar este
+	if (nivelActual) delete nivelActual;
 }
 
-// 2. Cargar Nivel
-void Juego::cargarNivel(int numCap) {
-	// CORRECCIÓN: Usamos '->' porque nivelActual es un puntero.
-	// Y llamamos a 'cargarMapa' (que es el nombre real en la clase Nivel)
-	nivelActual->cargarMapa(numCap);
-}
+// --- PROCESAMIENTO DE TECLAS ---
 
-// 3. Movimiento delegando al Héroe
-void Juego::intentarMoverSanMartin(int dx, int dy) {
-	// Si no estamos jugando o no hay nivel cargado, ¡NO HACER NADA!
-	if (estadoActual != JUGANDO || nivelActual == nullptr) return;
-	
-	// 1. Obtenemos al Héroe
-	SanMartin* heroe = nivelActual->getHeroe();
-	
-	if (heroe != nullptr) {
-		// 2. Calculamos A DÓNDE quiere ir (Futuro)
-		// Nota: Convertimos a int porque el mapa funciona con enteros
-		int proximoX = (int)(heroe->getX() + dx * 1.0f); // Asumiendo velocidad 1
-		int proximoY = (int)(heroe->getY() + dy * 1.0f);
-		
-		// 3. PREGUNTAMOS AL NIVEL: ¿Qué hay ahí?
-		int contenido = nivelActual->getContenidoCelda(proximoX, proximoY);
-		
-		// 4. SI NO ES PARED, nos movemos
-		if (contenido != PARED && contenido != AGUA) {
-			heroe->moverse(dx, dy);
-		}
-	}
-}
-
-// 4. Funciones de Control
-void Juego::pausarOReanudar() {
-	juegoPausado = !juegoPausado;
-}
-
-bool Juego::estaEnPausa() const {
-	return juegoPausado;
-}
-
-// 2. Modificamos actualizar() para verificar victoria/derrota
-void Juego::actualizar() {
-	// Si estamos en el MENÚ, no actualizamos el nivel (evitamos crash)
-		if (estadoActual == MENU_PRINCIPAL || estadoActual == PAUSA || estadoActual == CONFIGURACION) {
-		return; 
-		}
-		
-		// Solo actualizamos el nivel si estamos JUGANDO y existe el nivel
-			if (estadoActual == JUGANDO && nivelActual != nullptr) {
-			nivelActual->actualizar();
-	
-	// B. VERIFICAR DERROTA
-	// Si San Martín murió (vida <= 0)
-	SanMartin* heroe = nivelActual->getHeroe();
-	if (heroe == nullptr || !heroe->estaVivo()) {
-		estadoActual = PERDIDO;
-		return; // Fin del frame
-	}
-	
-	// C. VERIFICAR VICTORIA
-	// Obtenemos la posición actual del héroe
-	// Nota: Casteamos a int para usarlo en la matriz
-	int x = (int)heroe->getX();
-	int y = (int)heroe->getY();
-	
-	// Preguntamos al nivel qué hay en el suelo donde está parado el héroe
-	int terrenoBajoLosPies = nivelActual->getContenidoCelda(x, y);
-	
-	if (terrenoBajoLosPies == SALIDA_NIVEL) {
-		estadoActual = GANADO;
-		}
-	}
-}
-void Juego::atacarConSanMartin() {
-	if (juegoPausado) return;
-	
-	// 1. Obtenemos al héroe y la lista de todos
-	SanMartin* heroe = nivelActual->getHeroe();
-	const std::vector<Entidad*>& entidades = nivelActual->getEntidades();
-	
-	if (!heroe) return;
-	
-	// 2. Buscamos víctimas cercanas
-	for (Entidad* e : entidades) {
-		// Ignoramos a San Martín (no se ataca a sí mismo)
-		if (e == heroe) continue;
-		
-		// Si la entidad es un REALISTA (usamos getTipo para saberlo)
-		if (e->getTipo() == "REALISTA" && e->estaVivo()) {
-			
-			// Calculamos distancia
-			float dx = e->getX() - heroe->getX();
-			float dy = e->getY() - heroe->getY();
-			float dist = std::sqrt(dx*dx + dy*dy);
-			
-			// RANGO DE LA ESPADA: 1.5 casillas
-			if (dist < 1.5f) {
-				// Convertimos Entidad* a Personaje* para poder dañarlo
-				// (Dynamic cast es lo seguro, pero static_cast es más rápido aquí)
-				Personaje* p = static_cast<Personaje*>(e);
-				
-				p->recibirDanio(30.0f); // ¡Golpe fuerte!
-				
-				// Opcional: Sumar moral por cada golpe
-				heroe->arengarTropa(); 
+void Juego::procesarTeclaArriba() {
+	if (estadoActual == EN_MENU) menuPrincipal->moverArriba();
+	else if (estadoActual == PAUSA) menuPausa->moverArriba();
+	else if (estadoActual == CONFIGURACION) menuConfig->moverArriba();
+	else if (estadoActual == JUGANDO && nivelActual != nullptr) {
+		// Mover San Martín al Norte
+		SanMartin* heroe = nivelActual->getHeroe();
+		if (heroe) {
+			int tx = (int)heroe->getX();
+			int ty = (int)heroe->getY() - 1;
+			if (nivelActual->getContenidoCelda(tx, ty) != PARED) {
+				heroe->moverse(0, -1);
 			}
 		}
 	}
 }
 
-// --- LÓGICA DE NAVEGACIÓN ---
-
-void Juego::navegarMenu(int direccion) {
-	// Solo navegamos si estamos en un estado de menú
-	if (estadoActual == MENU_PRINCIPAL) {
-		opcionSeleccionada += direccion;
-		
-		// Límites del menú principal (Supongamos 3 opciones: Jugar, Config, Salir)
-		if (opcionSeleccionada < 0) opcionSeleccionada = 2;
-		if (opcionSeleccionada > 2) opcionSeleccionada = 0;
+void Juego::procesarTeclaAbajo() {
+	if (estadoActual == EN_MENU) menuPrincipal->moverAbajo();
+	else if (estadoActual == PAUSA) menuPausa->moverAbajo();
+	else if (estadoActual == CONFIGURACION) menuConfig->moverAbajo();
+	else if (estadoActual == JUGANDO && nivelActual != nullptr) {
+		// Mover San Martín al Sur
+		SanMartin* heroe = nivelActual->getHeroe();
+		if (heroe) {
+			int tx = (int)heroe->getX();
+			int ty = (int)heroe->getY() + 1;
+			if (nivelActual->getContenidoCelda(tx, ty) != PARED) {
+				heroe->moverse(0, 1);
+			}
+		}
 	}
-	else if (estadoActual == CONFIGURACION) {
-		// Aquí podrías navegar entre opciones de volumen
-		opcionSeleccionada += direccion;
-		if (opcionSeleccionada < 0) opcionSeleccionada = 1;
-		if (opcionSeleccionada > 1) opcionSeleccionada = 0;
-	}
-	// Añadir lógica para SELECCION_NIVEL si quieres
 }
 
-void Juego::confirmarSeleccion() {
-	if (estadoActual == MENU_PRINCIPAL) {
-		if (opcionSeleccionada == 0) { // Opción "JUGAR"
-			estadoActual = SELECCION_NIVEL; // O ir directo a JUGANDO
-			opcionSeleccionada = 0; // Reset para el siguiente menú
+void Juego::procesarTeclaIzquierda() {
+	// A. Si estamos configurando: Bajar volumen
+	if (estadoActual == CONFIGURACION) {
+		int op = menuConfig->getOpcionActual();
+		if (op == 0) { 
+			volumenMusica -= 10;
+			if (volumenMusica < 0) volumenMusica = 0;
 		}
-		else if (opcionSeleccionada == 1) { // Opción "CONFIGURACION"
+		else if (op == 1) {
+			volumenSonidos -= 10;
+			if (volumenSonidos < 0) volumenSonidos = 0;
+		}
+		actualizarTextosConfig(); // Refrescar texto
+	}
+	// B. Si estamos jugando: Mover izquierda
+	else if (estadoActual == JUGANDO && nivelActual != nullptr) {
+		SanMartin* heroe = nivelActual->getHeroe();
+		if (heroe) {
+			int tx = (int)heroe->getX() - 1;
+			int ty = (int)heroe->getY();
+			if (nivelActual->getContenidoCelda(tx, ty) != PARED) {
+				heroe->moverse(-1, 0);
+			}
+		}
+	}
+}
+
+void Juego::procesarTeclaDerecha() {
+	// A. Si estamos configurando: Subir volumen
+	if (estadoActual == CONFIGURACION) {
+		int op = menuConfig->getOpcionActual();
+		if (op == 0) { // Musica
+			volumenMusica += 10;
+			if (volumenMusica > 100) volumenMusica = 100;
+		}
+		else if (op == 1) { // Sonido
+			volumenSonidos += 10;
+			if (volumenSonidos > 100) volumenSonidos = 100;
+		}
+		actualizarTextosConfig();
+	}
+	// B. Si estamos jugando: Mover derecha
+	else if (estadoActual == JUGANDO && nivelActual != nullptr) {
+		SanMartin* heroe = nivelActual->getHeroe();
+		if (heroe) {
+			int tx = (int)heroe->getX() + 1;
+			int ty = (int)heroe->getY();
+			if (nivelActual->getContenidoCelda(tx, ty) != PARED) {
+				heroe->moverse(1, 0);
+			}
+		}
+	}
+}
+
+void Juego::procesarTeclaEnter() {
+	// --- CASO 1: ESTAMOS EN MENU PRINCIPAL ---
+	if (estadoActual == EN_MENU) {
+		int op = menuPrincipal->getOpcionActual();
+		
+		if (op == 0) { // OPCIÓN: COMENZAR CAMPAÑA
+			estadoActual = JUGANDO;
+			if (nivelActual) delete nivelActual; // Seguridad
+			nivelActual = new Nivel();
+			nivelActual->cargarMapa(0); // Cargar Tutorial
+		}
+		else if (op == 1) { // OPCIÓN: CONFIGURACION
+			estadoAnterior = EN_MENU;
 			estadoActual = CONFIGURACION;
-			opcionSeleccionada = 0;
+			menuConfig->reiniciarCursor();
 		}
-		else if (opcionSeleccionada == 2) { // Opción "SALIR"
+		else if (op == 2) { // OPCIÓN: SALIR
 			estadoActual = SALIR;
 		}
 	}
-	else if (estadoActual == SELECCION_NIVEL) {
-		// Supongamos que eligió el Tutorial
-		cargarNivel(0); // Carga el mapa
-		estadoActual = JUGANDO; // ¡Arranca el juego!
+	// --- CASO 2: ESTAMOS EN PAUSA ---
+	else if (estadoActual == PAUSA) {
+		int op = menuPausa->getOpcionActual();
+		
+		if (op == 0) { // OPCIÓN: CONTINUAR
+			estadoActual = JUGANDO; 
+		}
+		else if (op == 1) { // OPCIÓN: CONFIGURACION
+			estadoAnterior = PAUSA;
+			estadoActual = CONFIGURACION;
+			menuConfig->reiniciarCursor();
+		}
+		else if (op == 2) { // OPCIÓN: SALIR AL MENU
+			// Destruimos la partida actual
+			delete nivelActual;
+			nivelActual = nullptr;
+			// Volvemos a la portada
+			estadoActual = EN_MENU;
+			menuPrincipal->reiniciarCursor();
+		}
 	}
+	// --- CASO 3: ESTAMOS CONFIGURANDO ---
 	else if (estadoActual == CONFIGURACION) {
-		// Lógica para cambiar volumen (podríamos usar flechas izq/der)
+		int op = menuConfig->getOpcionActual();
+		if (op == 2) { // Opción "VOLVER"
+			estadoActual = estadoAnterior; // Regresa a donde estaba
+		}
 	}
 }
 
 void Juego::teclaEscape() {
 	if (estadoActual == JUGANDO) {
-		estadoActual = PAUSA; // Pausar juego
-		juegoPausado = true;
+		estadoActual = PAUSA;
+		menuPausa->reiniciarCursor();
 	}
 	else if (estadoActual == PAUSA) {
 		estadoActual = JUGANDO; // Reanudar
-		juegoPausado = false;
 	}
-	else if (estadoActual == CONFIGURACION || estadoActual == SELECCION_NIVEL) {
-		estadoActual = MENU_PRINCIPAL; // Volver atrás
-		opcionSeleccionada = 0;
+	// Salir de pantallas finales
+	else if (estadoActual == GAME_OVER || estadoActual == VICTORIA) {
+		if (nivelActual) {
+			delete nivelActual;
+			nivelActual = nullptr;
+		}
+		estadoActual = EN_MENU;
+	}
+	// Salir de Configuración hacia atrás
+	else if (estadoActual == CONFIGURACION) {
+		estadoActual = estadoAnterior;
 	}
 }
-// 5. Getter del mapa
-int Juego::getContenidoCelda(int x, int y) {
-	// Delegamos la pregunta al nivel usando la flecha
-	return nivelActual->getContenidoCelda(x, y);
+
+// --- ACTUALIZACIÓN ---
+
+void Juego::actualizar() {
+	if (estadoActual == JUGANDO && nivelActual != nullptr) {
+		
+		nivelActual->actualizar();
+		
+		// Verificar Derrota
+		if (!nivelActual->getHeroe()->estaVivo()) {
+			estadoActual = GAME_OVER;
+		}
+		
+		// --- VERIFICAR VICTORIA ---
+		SanMartin* heroe = nivelActual->getHeroe();
+		if (heroe) {
+			int x = (int)heroe->getX();
+			int y = (int)heroe->getY();
+			
+			// SI PISA LA SALIDA...
+			if (nivelActual->getContenidoCelda(x, y) == SALIDA_NIVEL) {
+				
+				// ... Y NO QUEDAN ENEMIGOS VIVOS
+				if (!nivelActual->hayEnemigosVivos()) {
+					estadoActual = VICTORIA;
+				}
+			}
+		}
+	}
 }
+void Juego::atacarConSanMartin() {
+	if (estadoActual != JUGANDO || nivelActual == nullptr) return;
+	
+	SanMartin* heroe = nivelActual->getHeroe();
+	if (!heroe) return;
+	
+	const std::vector<Entidad*>& entidades = nivelActual->getEntidades();
+	
+	for (Entidad* e : entidades) {
+		if (e == heroe) continue;
+		
+		if (e->getTipo() == "REALISTA" && e->estaVivo()) {
+			float dx = e->getX() - heroe->getX();
+			float dy = e->getY() - heroe->getY();
+			float dist = std::sqrt(dx*dx + dy*dy);
+			
+			if (dist < 1.5f) {
+				// Casteo y daño
+				Personaje* p = static_cast<Personaje*>(e);
+				p->recibirDanio(100.0f);
+			}
+		}
+	}
+}
+
+void Juego::actualizarTextosConfig() {
+	std::vector<std::string> opciones;
+	opciones.push_back("Musica: " + std::to_string(volumenMusica));
+	opciones.push_back("Sonidos: " + std::to_string(volumenSonidos));
+	opciones.push_back("VOLVER");
+	
+	// Asignamos las nuevas opciones al menú
+	menuConfig->setOpciones(opciones);
+}
+

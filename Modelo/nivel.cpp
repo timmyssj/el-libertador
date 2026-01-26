@@ -14,57 +14,59 @@ Nivel::~Nivel() {
 }
 
 void Nivel::cargarMapa(int numeroCapitulo) {
-	// 1. Limpiar lista antigua si recargamos nivel
-	for (Entidad* e : entidades) { delete e; }
-	entidades.clear();
-	
-	// 2. Limpiar Mapa (Todo Suelo)
-	for(int i = 0; i < 20; i++) {
-		for(int j = 0; j < 30; j++) {
-			mapa[i][j] = SUELO;
+	// 1. Limpiamos el mapa (todo suelo por defecto)
+	for(int y = 0; y < 20; y++) {
+		for(int x = 0; x < 30; x++) {
+			mapa[y][x] = SUELO;
 		}
 	}
-	// Bordes
+	
+	// 2. Bordes del mapa (Paredes)
 	for(int i = 0; i < 20; i++) { mapa[i][0] = PARED; mapa[i][29] = PARED; }
 	for(int j = 0; j < 30; j++) { mapa[0][j] = PARED; mapa[19][j] = PARED; }
 	
-	// 3. Configuración según capítulo
-	if (numeroCapitulo == 0) { // Tutorial
-		// Muros de prueba
+	if (numeroCapitulo == 0) { // TUTORIAL
+		// Paredes internas de prueba
 		for(int i = 5; i < 15; i++) { mapa[i][10] = PARED; }
 		
-		// --- CREACIÓN DE ENTIDADES (Lo que pide el diagrama) ---
+		// --- ¡ESTA LÍNEA ES LA CLAVE PARA GANAR! ---
+		mapa[18][28] = SALIDA_NIVEL; // Esquina inferior derecha
+		// ------------------------------------------
 		
-		// a) Creamos a San Martín
-		referenciaHeroe = new SanMartin(2, 2); // Nace en (2,2)
-		entidades.push_back(referenciaHeroe);  // Lo agregamos a la lista general
+		// Héroe
+		if (referenciaHeroe) delete referenciaHeroe;
+		referenciaHeroe = new SanMartin(2, 2);
+		entidades.push_back(referenciaHeroe);
 		
-		// b) Creamos Enemigos
-		Enemigo* realista1 = new Enemigo(15, 5, referenciaHeroe);
-		entidades.push_back(realista1);
-		
-		Enemigo* realista2 = new Enemigo(15, 15, referenciaHeroe);
-		entidades.push_back(realista2);
+		// Enemigos
+		entidades.push_back(new Enemigo(15, 5, referenciaHeroe));
+		entidades.push_back(new Enemigo(15, 15, referenciaHeroe));
 	}
 }
 void Nivel::actualizar() {
-	// Recorremos la lista
 	for (size_t i = 0; i < entidades.size(); i++) {
 		Entidad* e = entidades[i];
 		
 		if (e->estaVivo()) {
 			e->actualizar();
 		} 
-		// NUEVO: GESTIÓN DE MUERTES
-		// Si ha muerto y NO es San Martín (queremos Game Over, no que desaparezca)
-		else if (e->getTipo() != "PROCER") {
-			// Lo borramos de la memoria
-			delete e;
-			// Lo sacamos de la lista
+		else if (e->getTipo() != "PROCER") { 
+			// Si está muerto y NO es San Martín, lo borramos
+			delete e; 
 			entidades.erase(entidades.begin() + i);
-			i--; // Ajustamos el índice porque la lista se achicó
+			i--; // <--- ESTO ES CRÍTICO. Si falta, el juego puede fallar.
 		}
 	}
+}
+bool Nivel::hayEnemigosVivos() {
+	for (Entidad* e : entidades) {
+		// Si encontramos al menos un realista vivo, devolvemos TRUE
+		if (e->getTipo() == "REALISTA" && e->estaVivo()) {
+			return true;
+		}
+	}
+	// Si terminamos el bucle y no encontramos a nadie
+	return false;
 }
 
 int Nivel::getContenidoCelda(int x, int y) {

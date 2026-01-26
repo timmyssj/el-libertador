@@ -1,73 +1,74 @@
 #ifndef JUEGO_H
 #define JUEGO_H
 
-#include "Nivel.h"
+#include "menu.h"  // <--- Necesitamos esto para que funcione Menu*
+#include "nivel.h"
 
-// NUEVO: Estados posibles del juego
 enum EstadoJuego {
-	MENU_PRINCIPAL,
-	SELECCION_NIVEL,
-	CONFIGURACION,
+	EN_MENU,
 	JUGANDO,
+	SALIR,
 	PAUSA,
-	PERDIDO,
-	GANADO,
-	SALIR // Nuevo estado para que el main sepa cuándo cerrar la ventana
+	CONFIGURACION,
+	GAME_OVER,
+	VICTORIA
 };
 
 class Juego {
 private:
-	Nivel* nivelActual; 
-	int capitulo;
-	bool juegoPausado;
-	
-	// NUEVO: Variable para saber en qué estado estamos
 	EstadoJuego estadoActual;
+	EstadoJuego estadoAnterior;
 	
-	// --- VARIABLES DE MENÚ ---
-	int opcionSeleccionada; // 0, 1, 2... (Índice del botón actual)
+	// Módulos: Juego posee un Menú y un Nivel
+	Menu* menuPrincipal;   
+	Menu* menuPausa;
+	Menu* menuConfig;
+	Nivel* nivelActual;     
 	
-	// --- VARIABLES DE CONFIGURACIÓN ---
-	int volumenMusica; // 0 a 100
-	int volumenSonidos; // 0 a 100
+	//Sonidos
+	int volumenMusica, volumenSonidos;
 	
 public:
 	Juego();
 	~Juego();
 	
-	void cargarNivel(int numCap);
+	// --- INPUT DISTRIBUIDO ---
+	void procesarTeclaArriba();
+	void procesarTeclaAbajo();
+	void procesarTeclaEnter();
 	
-	// Control
-	void intentarMoverSanMartin(int dx, int dy);
+	//Ataque de SanMartin
 	void atacarConSanMartin();
-	void pausarOReanudar();
 	
-	// --- NUEVOS MÉTODOS DE CONTROL PARA EL MENÚ ---
-	// Tu compañero llamará a esto cuando presione flecha ARRIBA/ABAJO
-	void navegarMenu(int direccion); // direccion: -1 (arriba), 1 (abajo)
+	// --- NUEVO: MOVIMIENTO LATERAL ---
+	void procesarTeclaIzquierda();
+	void procesarTeclaDerecha();
 	
-	// Tu compañero llamará a esto cuando presione ENTER
-	void confirmarSeleccion();
+	// Función de ESCAPE (Pausa o Volver)
+	void teclaEscape();
 	
-	// Tu compañero llamará a esto cuando presione ESCAPE
-	void teclaEscape(); // Para pausar o volver atrás
+	// --- LÓGICA ---
+	void actualizar(); 
 	
-	// --- GETTERS PARA LA VISTA ---
-	int getOpcionSeleccionada() const { return opcionSeleccionada; }
-	int getVolumenMusica() const { return volumenMusica; }
-	int getVolumenSonidos() const { return volumenSonidos; }
-	
-	// Getters
-	bool estaEnPausa() const;
-	
-	// NUEVO GETTER: Para que la Ventana sepa si debe mostrar "Game Over" o "Victoria"
+	// --- GETTERS ---
+	// La Vista llamará a estos para saber qué dibujar
 	EstadoJuego getEstado() const { return estadoActual; }
 	
-	Nivel* getNivel() { return nivelActual; }
-	int getContenidoCelda(int x, int y);
+	// Si estamos en menú, la vista pedirá este puntero
+	Menu* getMenu() const { return menuPrincipal; }
 	
-	// Lógica principal
-	void actualizar(); 
+	// Si estamos jugando, la vista pedirá este puntero
+	Nivel* getNivel() { return nivelActual; }
+	
+	// Getter para que la vista sepa cuál dibujar
+	Menu* getMenuPausa() const { return menuPausa; }
+	
+	// Getter para la vista
+	Menu* getMenuConfig() const { return menuConfig; }
+	
+	// Helper para actualizar los textos cuando subes/bajas volumen
+	void actualizarTextosConfig();
+	
 };
 
 #endif
