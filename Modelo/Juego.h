@@ -6,6 +6,7 @@
 
 enum EstadoJuego {
 	EN_MENU,
+	INTRO_HISTORIA,
 	JUGANDO,
 	SALIR,
 	PAUSA,
@@ -27,6 +28,10 @@ private:
 	
 	//Sonidos
 	int volumenMusica, volumenSonidos;
+	
+	std::vector<std::string> lineasHistoria;
+	int paginaHistoriaActual;
+	
 	
 public:
 	Juego();
@@ -69,6 +74,16 @@ public:
 	// Helper para actualizar los textos cuando subes/bajas volumen
 	void actualizarTextosConfig();
 	
+	// Método auxiliar para iniciar cualquier nivel con historia
+	void prepararNivel(Nivel* nuevoNivel);
+	
+	//getter simple
+	std::string getTextoHistoria() const {
+		if (paginaHistoriaActual >= 0 && paginaHistoriaActual < (int)lineasHistoria.size()) {
+			return lineasHistoria[paginaHistoriaActual];
+		}
+		return "";
+	}
 };
 
 #endif

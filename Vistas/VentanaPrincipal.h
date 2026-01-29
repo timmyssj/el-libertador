@@ -14,12 +14,12 @@ private:
 	
 public:
 	VentanaPrincipal(Juego* j) : modelo(j) {
-		ventana.create(sf::VideoMode(800, 600), "San Martin: El Libertador");
+		ventana.create(sf::VideoMode(1100, 600), "San Martin: El Libertador");
 		ventana.setFramerateLimit(60);
 		
 		// CARGA DE FUENTE (Vital para el menú)
 		// Asegúrate de tener un archivo .ttf junto a tu ejecutable
-		if (!fuente.loadFromFile("alagard.ttf")) {
+		if (!fuente.loadFromFile("PressStart2P.ttf")) {
 			// Si no tienes fuente, el menú no se verá. 
 			// Poned un archivo .ttf en la carpeta del proyecto.
 		}
@@ -100,10 +100,22 @@ private:
 			
 			if (estado == EN_MENU) {
 				// Título Grande
-				dibujarTexto("SAN MARTIN: EL LIBERTADOR", 200, 100, sf::Color::Cyan, 30);
+				dibujarTexto("EL LIBERTADOR", 550, 100, sf::Color::Cyan, 30);
 				// Dibujamos el menú principal
-				dibujarMenuGenerico(modelo->getMenu(), 300, 250);
+				dibujarMenuGenerico(modelo->getMenu(), 550, 250);
 			} 
+			else if (estado == INTRO_HISTORIA) {
+				// 1. Título
+				dibujarTexto("CONTEXTO HISTÓRICO", 550, 100, sf::Color::Yellow, 30);
+				
+				// 2. Texto de la trama (Centrado)
+				std::string texto = modelo->getTextoHistoria();
+				// Truco: restamos un poco a X según el largo del texto para centrarlo a ojo
+				dibujarTexto(texto, 550, 300, sf::Color::White, 17);
+				
+				// 3. Instrucción
+				dibujarTexto("Presiona ENTER para continuar...", 750, 500, sf::Color::Cyan, 15);
+			}
 			else if (estado == JUGANDO) {
 				dibujarJuego();
 			}
@@ -115,10 +127,10 @@ private:
 				fondoOscuro.setFillColor(sf::Color(0, 0, 0, 150)); // Negro con transparencia
 				ventana.draw(fondoOscuro);
 				
-				dibujarTexto("JUEGO PAUSADO", 300, 150, sf::Color::Yellow, 40);
+				dibujarTexto("JUEGO PAUSADO", 550, 150, sf::Color::Yellow, 40);
 				
 				// Dibujamos el menú de pausa
-				dibujarMenuGenerico(modelo->getMenuPausa(), 300, 300);
+				dibujarMenuGenerico(modelo->getMenuPausa(), 550, 300);
 			}
 			// --- NUEVO ---
 			else if (estado == CONFIGURACION) {
@@ -151,7 +163,7 @@ private:
 			Menu* m = modelo->getMenu();
 			if (!m) return;
 			
-			dibujarTexto("SAN MARTIN: EL LIBERTADOR", 200, 100, sf::Color::Cyan, 30);
+			dibujarTexto("EL LIBERTADOR", 200, 100, sf::Color::Cyan, 30);
 			
 			for (int i = 0; i < m->getCantidadOpciones(); i++) {
 				sf::Color color = sf::Color::White;
@@ -211,7 +223,15 @@ private:
 			texto.setString(mensaje);
 			texto.setCharacterSize(tam);
 			texto.setFillColor(color);
+			
+			// TRUCO: CENTRAR ORIGEN
+			// Calculamos el ancho y alto del texto y ponemos el "punto de anclaje" en el medio
+			sf::FloatRect bounds = texto.getLocalBounds();
+			texto.setOrigin(bounds.width / 2, bounds.height / 2);
+			
+			// Ahora 'x' e 'y' serán el CENTRO exacto del texto
 			texto.setPosition(x, y);
+			
 			ventana.draw(texto);
 		}
 		

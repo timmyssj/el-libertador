@@ -1,8 +1,9 @@
 #include "juego.h"
+#include "NivelTutorial.h"
 #include <iostream>
 #include <cmath>
 #include <vector>
-#include <string> // <--- IMPORTANTE: Necesario para std::to_string
+#include <string> 
 
 // 1. CONSTRUCTOR
 Juego::Juego() {
@@ -127,10 +128,13 @@ void Juego::procesarTeclaEnter() {
 		int op = menuPrincipal->getOpcionActual();
 		
 		if (op == 0) { // OPCIÓN: COMENZAR CAMPAÑA
-			estadoActual = JUGANDO;
-			if (nivelActual) delete nivelActual; // Seguridad
-			nivelActual = new Nivel();
-			nivelActual->cargarMapa(0); // Cargar Tutorial
+			// 1. Limpiamos nivel viejo si existe
+			if (nivelActual) delete nivelActual; 
+			
+			// 2. ¡AQUÍ ESTÁ EL CAMBIO!
+			// En lugar de ir a JUGANDO, llamamos a prepararNivel.
+			// Esto cargará el texto y decidirá si mostrar historia o jugar.
+			prepararNivel(new NivelTutorial()); 
 		}
 		else if (op == 1) { // OPCIÓN: CONFIGURACION
 			estadoAnterior = EN_MENU;
@@ -141,7 +145,19 @@ void Juego::procesarTeclaEnter() {
 			estadoActual = SALIR;
 		}
 	}
-	// --- CASO 2: ESTAMOS EN PAUSA ---
+	
+	// --- CASO 2: ESTAMOS LEYENDO LA HISTORIA (NUEVO) ---
+	else if (estadoActual == INTRO_HISTORIA) {
+		paginaHistoriaActual++;
+		
+		// Si se acabaron las páginas de historia, arrancamos el juego
+		if (paginaHistoriaActual >= (int)lineasHistoria.size()) {
+			estadoActual = JUGANDO;
+			// El nivel ya fue creado en 'prepararNivel', así que solo cambiamos el estado
+		}
+	}
+	
+	// --- CASO 3: ESTAMOS EN PAUSA ---
 	else if (estadoActual == PAUSA) {
 		int op = menuPausa->getOpcionActual();
 		
@@ -154,19 +170,17 @@ void Juego::procesarTeclaEnter() {
 			menuConfig->reiniciarCursor();
 		}
 		else if (op == 2) { // OPCIÓN: SALIR AL MENU
-			// Destruimos la partida actual
 			delete nivelActual;
 			nivelActual = nullptr;
-			// Volvemos a la portada
 			estadoActual = EN_MENU;
 			menuPrincipal->reiniciarCursor();
 		}
 	}
-	// --- CASO 3: ESTAMOS CONFIGURANDO ---
+	// --- CASO 4: ESTAMOS CONFIGURANDO ---
 	else if (estadoActual == CONFIGURACION) {
 		int op = menuConfig->getOpcionActual();
 		if (op == 2) { // Opción "VOLVER"
-			estadoActual = estadoAnterior; // Regresa a donde estaba
+			estadoActual = estadoAnterior; 
 		}
 	}
 }
@@ -246,7 +260,6 @@ void Juego::atacarConSanMartin() {
 		}
 	}
 }
-
 void Juego::actualizarTextosConfig() {
 	std::vector<std::string> opciones;
 	opciones.push_back("Musica: " + std::to_string(volumenMusica));
@@ -257,3 +270,18 @@ void Juego::actualizarTextosConfig() {
 	menuConfig->setOpciones(opciones);
 }
 
+void Juego::prepararNivel(Nivel* nuevoNivel) {
+	// 1. Guardamos el nivel, pero NO empezamos a jugar todavía
+	nivelActual = nuevoNivel;
+	
+	// 2. Copiamos la historia del nivel al gestor de texto
+	lineasHistoria = nivelActual->getTextoIntro();
+	paginaHistoriaActual = 0;
+	
+	// 3. Si el nivel tiene historia, la mostramos. Si no, jugamos directo.
+	if (!lineasHistoria.empty()) {
+		estadoActual = INTRO_HISTORIA;
+	} else {
+		estadoActual = JUGANDO;
+	}
+}

@@ -3,51 +3,41 @@
 
 #include <vector>
 #include "Entidad.h"
-#include "SanMartin.h" // Necesario para crear al héroe
-#include "Enemigo.h"   // Necesario para crear enemigos
+#include "SanMartin.h"
+#include "Enemigo.h"
 
-// Reutilizamos terrenos
-enum TipoTerreno {
-	SUELO, PARED, AGUA, EVENTO_NARRATIVO, SALIDA_NIVEL
-};
+// Definiciones de tipos de celda
+const int SUELO = 0;
+const int PARED = 1;
+const int AGUA = 2;
+const int SALIDA_NIVEL = 4;
 
 class Nivel {
-private:
-	// La matriz del mapa (migrada desde Juego)
+protected: // <--- CAMBIO CLAVE: 'protected' permite que los hijos accedan
 	int mapa[20][30];
-	
-	// Usamos punteros (Entidad*) para aprovechar el polimorfismo.
-	// permite guardar San Martines y Enemigos mezclados.
 	std::vector<Entidad*> entidades;
-	
-	// Un puntero directo a San Martín para acceso rápido (atajos)
 	SanMartin* referenciaHeroe; 
+	std::vector<std::string> textoIntro;
 	
 public:
 	Nivel();
-	~Nivel(); // Destructor (Importante para borrar memoria)
+	virtual ~Nivel(); // Destructor virtual es OBLIGATORIO en herencia
 	
-	// Método del diagrama: Inicializa mapa y spawnea personajes
-	void cargarMapa(int numeroCapitulo);
+	// Método Virtual Puro: Obligamos a los hijos a definir cómo son
+	virtual void cargarContenido() = 0; 
 	
-	//actualizar entidades del Nivel
+	// Métodos comunes (La física no cambia entre niveles)
 	void actualizar();
-	
-	//saber si hay enemigos
+	int getContenidoCelda(int x, int y);
+	SanMartin* getHeroe();
+	const std::vector<Entidad*>& getEntidades();
 	bool hayEnemigosVivos();
 	
-	// Getters para que la Vista y el Juego consulten
-	int getContenidoCelda(int x, int y);
+	// Helper para los hijos: limpia el mapa a "todo suelo" con bordes
+	void inicializarMapaVacio(); 
 	
-	// Devuelve la lista completa para dibujarla
-	const std::vector<Entidad*>& getEntidades() const { 
-		return entidades; 
-	}
-	
-	// Devuelve solo al héroe (útil para la cámara o UI)
-	SanMartin* getHeroe() const {
-		return referenciaHeroe;
-	}
+	// Método para que Juego pueda leer la historia
+	std::vector<std::string> getTextoIntro() { return textoIntro; }
 };
 
 #endif
