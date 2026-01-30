@@ -1,9 +1,10 @@
 #include "Nivel.h"
 
-Nivel::Nivel() {
+Nivel::Nivel(){
 	referenciaHeroe = nullptr;
 	// Ya no cargamos nada en el constructor.
 	// Esperamos a que el hijo llame a 'cargarContenido()'
+	tituloIntro = "CONTEXTO HISTORICO"; // Valor por defecto
 }
 
 Nivel::~Nivel() {

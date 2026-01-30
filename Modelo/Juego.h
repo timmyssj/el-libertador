@@ -31,6 +31,7 @@ private:
 	
 	std::vector<std::string> lineasHistoria;
 	int paginaHistoriaActual;
+	std::string tituloActual;
 	
 	
 public:
@@ -84,6 +85,13 @@ public:
 		}
 		return "";
 	}
+	
+	//sabemos si es la última página de texto
+	bool esUltimaPaginaIntro() const {
+		return paginaHistoriaActual >= (int)lineasHistoria.size() - 1;
+	}
+	//titulo 
+	std::string getTituloActual() const { return tituloActual; }
 };
 
 #endif

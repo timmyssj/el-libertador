@@ -18,6 +18,7 @@ protected: // <--- CAMBIO CLAVE: 'protected' permite que los hijos accedan
 	std::vector<Entidad*> entidades;
 	SanMartin* referenciaHeroe; 
 	std::vector<std::string> textoIntro;
+	std::string tituloIntro;
 	
 public:
 	Nivel();
@@ -38,6 +39,7 @@ public:
 	
 	// Método para que Juego pueda leer la historia
 	std::vector<std::string> getTextoIntro() { return textoIntro; }
+	std::string getTituloIntro() { return tituloIntro; }
 };
 
 #endif

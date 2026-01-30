@@ -271,14 +271,16 @@ void Juego::actualizarTextosConfig() {
 }
 
 void Juego::prepararNivel(Nivel* nuevoNivel) {
-	// 1. Guardamos el nivel, pero NO empezamos a jugar todavía
 	nivelActual = nuevoNivel;
 	
-	// 2. Copiamos la historia del nivel al gestor de texto
+	// 1. Copiamos la historia
 	lineasHistoria = nivelActual->getTextoIntro();
 	paginaHistoriaActual = 0;
 	
-	// 3. Si el nivel tiene historia, la mostramos. Si no, jugamos directo.
+	// 2. Copiamos el Título (NUEVO)
+	tituloActual = nivelActual->getTituloIntro(); 
+	
+	// 3. Decidimos estado
 	if (!lineasHistoria.empty()) {
 		estadoActual = INTRO_HISTORIA;
 	} else {

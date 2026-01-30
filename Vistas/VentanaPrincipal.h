@@ -106,9 +106,15 @@ private:
 			} 
 			else if (estado == INTRO_HISTORIA) {
 				// 1. Título
-				dibujarTexto("CONTEXTO HISTÓRICO", 550, 100, sf::Color::Yellow, 30);
-				
-				// 2. Texto de la trama (Centrado)
+				// --- LOGICA DEL TITULO CAMBIANTE ---
+				if (modelo->esUltimaPaginaIntro()) {
+					// Si es la última página (Instrucciones), mostramos el nombre del Nivel
+					dibujarTexto(modelo->getTituloActual(), 550, 100, sf::Color::Cyan, 30);
+				} 
+				else {
+					// Si estamos leyendo historia, mostramos el título fijo
+					dibujarTexto("CONTEXTO HISTÓRICO", 550, 100, sf::Color::Yellow, 30);
+				}
 				std::string texto = modelo->getTextoHistoria();
 				// Truco: restamos un poco a X según el largo del texto para centrarlo a ojo
 				dibujarTexto(texto, 550, 300, sf::Color::White, 17);
@@ -127,7 +133,7 @@ private:
 				fondoOscuro.setFillColor(sf::Color(0, 0, 0, 150)); // Negro con transparencia
 				ventana.draw(fondoOscuro);
 				
-				dibujarTexto("JUEGO PAUSADO", 550, 150, sf::Color::Yellow, 40);
+				dibujarTexto("JUEGO PAUSADO", 550, 100, sf::Color::Yellow, 30);
 				
 				// Dibujamos el menú de pausa
 				dibujarMenuGenerico(modelo->getMenuPausa(), 550, 300);
@@ -137,21 +143,21 @@ private:
 				// Si venimos de pausa, dibujamos el juego de fondo
 				// Si venimos del menú, fondo negro (ya está limpio)
 				
-				dibujarTexto("CONFIGURACION", 300, 100, sf::Color::Cyan, 30);
-				dibujarMenuGenerico(modelo->getMenuConfig(), 300, 200);
+				dibujarTexto("CONFIGURACIÓN", 550, 100, sf::Color::Cyan, 30);
+				dibujarMenuGenerico(modelo->getMenuConfig(), 550, 200);
 				
 				dibujarTexto("Usa IZQ/DER para cambiar valor", 250, 500, sf::Color::White, 15);
 			}
 			// --- NUEVO: PANTALLAS FINALES ---
 			else if (estado == GAME_OVER) {
 				// Fondo rojo oscuro (opcional, o dejar negro)
-				dibujarTexto("¡DERROTA!", 280, 200, sf::Color::Red, 60);
-				dibujarTexto("Presiona ESC para volver al Menu", 200, 400, sf::Color::White, 20);
+				dibujarTexto("¡DERROTA!", 550, 200, sf::Color::Red, 60);
+				dibujarTexto("Presiona ESC para volver al Menú", 750, 400, sf::Color::White, 20);
 			}
 			else if (estado == VICTORIA) {
-				dibujarTexto("¡VICTORIA!", 260, 200, sf::Color::Green, 60);
-				dibujarTexto("Has liberado esta zona.", 280, 300, sf::Color::White, 20);
-				dibujarTexto("Presiona ESC para volver al Menu", 200, 400, sf::Color::White, 20);
+				dibujarTexto("¡VICTORIA!", 550, 200, sf::Color::Green, 60);
+				dibujarTexto("Has liberado esta zona.", 550, 300, sf::Color::White, 20);
+				dibujarTexto("Presiona ESC para volver al Menú", 750, 400, sf::Color::White, 20);
 			}
 			
 			ventana.display(); 
@@ -185,8 +191,8 @@ private:
 			float tamCelda = 25.0f; // Tamaño de cada cuadradito
 			sf::RectangleShape celda(sf::Vector2f(tamCelda, tamCelda));
 			
-			for (int y = 0; y < 20; y++) {
-				for (int x = 0; x < 30; x++) {
+			for (int y = 0; y < 24; y++) {
+				for (int x = 0; x < 44; x++) {
 					int tipo = nivel->getContenidoCelda(x, y);
 					
 					// Colores simples por ahora (Placeholder)
@@ -210,6 +216,8 @@ private:
 					forma.setFillColor(sf::Color::White); // San Martín es Blanco (Patria)
 				} else if (e->getTipo() == "REALISTA") {
 					forma.setFillColor(sf::Color::Red);   // Realistas Rojos
+				} else if (e->getTipo() == "ALIADO") {
+					forma.setFillColor(sf::Color::Blue); // Granaderos azules
 				}
 				
 				ventana.draw(forma);
