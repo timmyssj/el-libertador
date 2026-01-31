@@ -1,5 +1,6 @@
 #include "juego.h"
 #include "NivelTutorial.h"
+#include "enemigo.h"
 #include <iostream>
 #include <cmath>
 #include <vector>
@@ -210,28 +211,52 @@ void Juego::teclaEscape() {
 // --- ACTUALIZACIÓN ---
 
 void Juego::actualizar() {
+	
 	if (estadoActual == JUGANDO && nivelActual != nullptr) {
 		
 		nivelActual->actualizar();
+		
+		SanMartin* heroe = nivelActual->getHeroe();
 		
 		// Verificar Derrota
 		if (!nivelActual->getHeroe()->estaVivo()) {
 			estadoActual = GAME_OVER;
 		}
 		
-		// --- VERIFICAR VICTORIA ---
-		SanMartin* heroe = nivelActual->getHeroe();
-		if (heroe) {
-			int x = (int)heroe->getX();
-			int y = (int)heroe->getY();
-			
-			// SI PISA LA SALIDA...
-			if (nivelActual->getContenidoCelda(x, y) == SALIDA_NIVEL) {
+		// --- NUEVO: SISTEMA DE COMBATE (Enemigos atacan al Héroe) ---
+		const std::vector<Entidad*>& entidades = nivelActual->getEntidades();
+		
+		for (Entidad* e : entidades) {
+			if (e->getTipo() == "REALISTA" && e->estaVivo()) {
+				// Calculamos distancia al héroe
+				float dx = e->getX() - heroe->getX();
+				float dy = e->getY() - heroe->getY();
+				float dist = std::sqrt(dx*dx + dy*dy);
 				
-				// ... Y NO QUEDAN ENEMIGOS VIVOS
-				if (!nivelActual->hayEnemigosVivos()) {
-					estadoActual = VICTORIA;
+				// Si está a distancia de golpe (cerca, ej: 1.0 bloque)
+				if (dist < 1.0f) {
+					// Casteamos a Enemigo para acceder a 'intentarAtacar'
+					Enemigo* realista = static_cast<Enemigo*>(e);
+					
+					if (realista->intentarAtacar()) {
+						heroe->recibirDanio(10); // Le quita 10 de vida
+						// Opcional: Imprimir en consola para debug
+						// std::cout << "San Martin herido! Vida restante: " << heroe->getVida() << std::endl;
+					}
 				}
+			}
+		}
+		// --- VERIFICAR VICTORIA ---
+		
+		int x = (int)heroe->getX();
+		int y = (int)heroe->getY();
+		
+		// SI PISA LA SALIDA...
+		if (nivelActual->getContenidoCelda(x, y) == SALIDA_NIVEL) {
+			
+			// ... Y NO QUEDAN ENEMIGOS VIVOS
+			if (!nivelActual->hayEnemigosVivos()) {
+				estadoActual = VICTORIA;
 			}
 		}
 	}

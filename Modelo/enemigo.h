@@ -1,52 +1,55 @@
 #ifndef ENEMIGO_H
 #define ENEMIGO_H
 
-#include "Personaje.h"
+#include "personaje.h"
+#include "SanMartin.h"
 #include <cmath>
-#include <string>
 
 class Enemigo : public Personaje {
 private:
+	SanMartin* objetivo;
 	float rangoVision;
-	Personaje* objetivo; // <-- NUEVO: Puntero al héroe para saber a quién perseguir
+	int cooldownAtaque; // <--- NUEVO: Contador para esperar entre golpes
 	
 public:
-	// Constructor actualizado: Ahora pide el "target" (objetivo)
-	Enemigo(float startX, float startY, Personaje* target) 
-		: Personaje(startX, startY, 30.0f, 0.05f) { // Velocidad muy baja (0.05) para que no sea imposible
-		rangoVision = 10.0f;
-		objetivo = target;
+	Enemigo(float x, float y, SanMartin* heroe) 
+		: Personaje(x, y, 50, 0.03f) { // 50 HP, Velocidad lenta
+		
+		objetivo = heroe;
+		rangoVision = 6.0f;
+		cooldownAtaque = 0; // Al principio está listo para atacar
 	}
 	
-	// --- IA: CEREBRO DEL ENEMIGO ---
+	std::string getTipo() override { return "REALISTA"; }
+	
 	void actualizar() override {
-		if (!objetivo || !objetivo->estaVivo()) return; 
+		// Bajar el contador si es mayor a 0
+		if (cooldownAtaque > 0) cooldownAtaque--;
 		
-		// 1. Calcular distancia
+		if (!objetivo || !objetivo->estaVivo()) return;
+		
+		// --- IA DE PERSECUCIÓN ---
 		float dx = objetivo->getX() - x;
 		float dy = objetivo->getY() - y;
-		float distancia = std::sqrt(dx*dx + dy*dy);
+		float dist = std::sqrt(dx*dx + dy*dy);
 		
-		// 2. LÓGICA DE COMBATE
-		// Si está "pegado" al héroe (distancia < 1.0), ataca
-		if (distancia < 1.0f) {
-			// Le quitamos vida al objetivo (San Martín)
-			// Usamos un valor pequeño (0.5) porque esto se ejecuta 60 veces por segundo
-			objetivo->recibirDanio(0.5f); 
-		} 
-		// 3. SI NO, PERSEGUIR (Si lo ve pero está lejos)
-		else if (distancia < rangoVision) {
-			if (std::abs(dx) > std::abs(dy)) {
-				if (dx > 0) x += velocidad; else x -= velocidad;
-			} else {
-				if (dy > 0) y += velocidad; else y -= velocidad;
-			}
+		// Si te ve, te persigue
+		if (dist < rangoVision && dist > 0.8f) { // Se detiene un poco antes de chocarte
+			float dirX = dx / dist;
+			float dirY = dy / dist;
+			moverse(dirX, dirY);
 		}
 	}
 	
-	std::string getTipo() override {
-		return "REALISTA"; 
+	// --- NUEVO MÉTODO: Intentar atacar ---
+	// Devuelve true si pegó el golpe, false si estaba recargando
+	bool intentarAtacar() {
+		if (cooldownAtaque == 0) {
+			cooldownAtaque = 60; // Espera 60 frames (aprox 1 segundo) para volver a pegar
+			return true;
+		}
+		return false;
 	}
 };
 
-#endif // ENEMIGO_H
+#endif

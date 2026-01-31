@@ -124,6 +124,18 @@ private:
 			}
 			else if (estado == JUGANDO) {
 				dibujarJuego();
+				
+				// --- UI: BARRA DE VIDA ---
+				if (modelo->getNivelActual() && modelo->getNivelActual()->getHeroe()) {
+					int vida = modelo->getNivelActual()->getHeroe()->getVida();
+					
+					// Color dinámico: Verde si está sano, Rojo si está muriendo
+					sf::Color colorVida = sf::Color::Green;
+					if (vida < 30) colorVida = sf::Color::Red;
+					
+					// Dibujamos el texto arriba a la izquierda
+					dibujarTexto("SALUD: " + std::to_string(vida) + "%", 100, 30, colorVida, 20);
+				}
 			}
 			else if (estado == PAUSA) {
 				dibujarJuego(); // Fondo del juego congelado
@@ -184,7 +196,7 @@ private:
 		}
 		
 		void dibujarJuego() {
-			Nivel* nivel = modelo->getNivel();
+			Nivel* nivel = modelo->getNivelActual();
 			if (!nivel) return; // Seguridad
 			
 			// A. DIBUJAR MAPA (Celdas)

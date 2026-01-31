@@ -64,7 +64,7 @@ public:
 	Menu* getMenu() const { return menuPrincipal; }
 	
 	// Si estamos jugando, la vista pedirá este puntero
-	Nivel* getNivel() { return nivelActual; }
+	Nivel* getNivelActual() { return nivelActual; }
 	
 	// Getter para que la vista sepa cuál dibujar
 	Menu* getMenuPausa() const { return menuPausa; }
