@@ -3,9 +3,11 @@
 
 #include "menu.h"  // <--- Necesitamos esto para que funcione Menu*
 #include "nivel.h"
+#include <fstream>
 
 enum EstadoJuego {
 	EN_MENU,
+	SELECCION_NIVEL,
 	INTRO_HISTORIA,
 	JUGANDO,
 	SALIR,
@@ -25,6 +27,10 @@ private:
 	Menu* menuPausa;
 	Menu* menuConfig;
 	Nivel* nivelActual;     
+	Menu* menuNiveles;
+	
+	// PROGRESO
+	int nivelMaximoDesbloqueado; // 0=Tutorial, 1=Nivel 1, 2=Nivel 2...
 	
 	//Sonidos
 	int volumenMusica, volumenSonidos;
@@ -33,6 +39,8 @@ private:
 	int paginaHistoriaActual;
 	std::string tituloActual;
 	
+	void guardarProgreso();
+	void cargarProgreso();
 	
 public:
 	Juego();
@@ -92,6 +100,15 @@ public:
 	}
 	//titulo 
 	std::string getTituloActual() const { return tituloActual; }
+	
+	// Getter para la vista
+	Menu* getMenuNiveles() { return menuNiveles; }
+	int getNivelMaximo() { return nivelMaximoDesbloqueado; }
+	
+	// Método para desbloquear el siguiente nivel al ganar
+	void desbloquearSiguienteNivel() {
+		nivelMaximoDesbloqueado++;
+	}
 };
 
 #endif

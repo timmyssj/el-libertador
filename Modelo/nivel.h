@@ -40,6 +40,9 @@ public:
 	// Método para que Juego pueda leer la historia
 	std::vector<std::string> getTextoIntro() { return textoIntro; }
 	std::string getTituloIntro() { return tituloIntro; }
+	
+	//detectar entidades
+	bool esCeldaOcupada(int x, int y);
 };
 
 #endif

@@ -10,14 +10,21 @@ private:
 	int indiceSeleccionado;
 	
 public:
-	// MODIFICADO: Ahora el constructor pide la lista de opciones
+	// Constructor
 	Menu(std::vector<std::string> listaOpciones) {
 		opciones = listaOpciones;
 		indiceSeleccionado = 0;
 	}
 	
-	void setOpciones(std::vector<std::string> nuevasOpciones) {
+	// --- CORRECCIÓN 1: SETTER ---
+	void setOpciones(const std::vector<std::string>& nuevasOpciones) {
 		opciones = nuevasOpciones;
+		indiceSeleccionado = 0; // Reiniciamos el cursor usando la variable correcta
+	}
+	
+	// --- CORRECCIÓN 2: GETTER (Faltaba esto para que la Ventana funcione) ---
+	std::vector<std::string> getOpciones() const {
+		return opciones;
 	}
 	
 	void moverArriba() {
@@ -30,7 +37,6 @@ public:
 		if (indiceSeleccionado >= (int)opciones.size()) indiceSeleccionado = 0;
 	}
 	
-	// Función para resetear el cursor al abrir el menú
 	void reiniciarCursor() { indiceSeleccionado = 0; }
 	
 	int getOpcionActual() const { return indiceSeleccionado; }

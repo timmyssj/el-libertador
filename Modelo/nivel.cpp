@@ -56,3 +56,17 @@ bool Nivel::hayEnemigosVivos() {
 	}
 	return false; // Solo devuelve false si limpiaste todo
 }
+bool Nivel::esCeldaOcupada(int x, int y) {
+	for (Entidad* e : entidades) {
+		// Si la entidad está viva Y está en la posición que preguntamos
+		if (e->estaVivo() && (int)e->getX() == x && (int)e->getY() == y) {
+			
+			// Excepción: No chocamos con nosotros mismos (San Martín)
+			if (e->getTipo() == "PROCER") continue; 
+			
+			// Si es un Muñeco o un Enemigo, la celda está ocupada
+			return true;
+		}
+	}
+	return false; // Está libre
+}
