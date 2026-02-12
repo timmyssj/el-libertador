@@ -2,7 +2,7 @@
 #define NIVEL_TUTORIAL_H
 
 #include "Nivel.h"
-#include "Granadero.h"
+#include "Munieco.h"
 
 class NivelTutorial : public Nivel {
 public:
@@ -35,24 +35,30 @@ public:
 	}
 	
 	void cargarContenido() override {
-		// 1. Usamos el helper del padre para limpiar
-		inicializarMapaVacio();
+		inicializarMapaVacio(); 
 		
-		// 2. Diseño específico del Tutorial (Paredes internas)
-		for(int i = 5; i < 15; i++) { mapa[i][10] = PARED; }
+		// 1. DISEÑO EN ZIG-ZAG (Serpiente)
+		// Paredes horizontales largas para obligar a recorrer todo
+		for(int x = 5; x < 25; x++) { 
+			mapa[6][x] = PARED;   // Muro superior
+			mapa[14][x] = PARED;  // Muro inferior
+		}
 		
-		// 3. Meta
+		// Paredes verticales para cerrar los pasillos y forzar la vuelta
+		for(int y = 6; y < 15; y++) { mapa[y][25] = PARED; } // Cierre derecho
+		mapa[14][5] = PARED; // Un bloque para forzar la entrada
+		
+		// 2. LA SALIDA (Abajo a la derecha)
 		mapa[18][28] = SALIDA_NIVEL;
 		
-		// 4. Entidades
-		// Nota: Agregamos a 'entidades' directamente porque es 'protected'
-		referenciaHeroe = new SanMartin(2, 2);
+		// 3. EL HÉROE (Arriba a la izquierda)
+		referenciaHeroe = new SanMartin(2, 2); 
 		entidades.push_back(referenciaHeroe);
 		
-		entidades.push_back(new Enemigo(15, 5, referenciaHeroe));
-		entidades.push_back(new Enemigo(15, 15, referenciaHeroe));
-		
-		entidades.push_back(new Granadero(2, 4, referenciaHeroe));
+		// 4. MUÑECOS (Estratégicamente ubicados en el camino)
+		entidades.push_back(new Munieco(10, 3));  // En el primer pasillo
+		entidades.push_back(new Munieco(20, 10)); // En el centro (curva)
+		entidades.push_back(new Munieco(10, 17)); // En el pasillo final
 	}
 };
 

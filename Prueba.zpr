@@ -15,7 +15,7 @@ tab_width=4
 tab_use_spaces=0
 explorer_path=.
 inherits_from=
-current_source=Modelo\juego.cpp
+current_source=Vistas\VentanaPrincipal.h
 path_char=\
 [source]
 path=main.cpp
@@ -34,7 +34,7 @@ cursor=66:22
 open=true
 [header]
 path=Vistas\VentanaPrincipal.h
-cursor=198:40
+cursor=162:21
 open=true
 [header]
 path=Modelo\entidad.h

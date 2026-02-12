@@ -128,13 +128,55 @@ private:
 				// --- UI: BARRA DE VIDA ---
 				if (modelo->getNivelActual() && modelo->getNivelActual()->getHeroe()) {
 					int vida = modelo->getNivelActual()->getHeroe()->getVida();
+					int vidaMax = 100; // Asumiendo 100 como base
 					
-					// Color dinámico: Verde si está sano, Rojo si está muriendo
-					sf::Color colorVida = sf::Color::Green;
-					if (vida < 30) colorVida = sf::Color::Red;
+					// 1. Fondo de la barra (Gris o Rojo oscuro)
+					sf::RectangleShape fondoBarra(sf::Vector2f(200, 20)); // 200px de ancho
+					fondoBarra.setPosition(50, 30);
+					fondoBarra.setFillColor(sf::Color(50, 0, 0));
+					fondoBarra.setOutlineThickness(2);
+					fondoBarra.setOutlineColor(sf::Color::White);
+					ventana.draw(fondoBarra);
 					
-					// Dibujamos el texto arriba a la izquierda
-					dibujarTexto("SALUD: " + std::to_string(vida) + "%", 100, 30, colorVida, 20);
+					// 2. Barra de vida actual (Verde a Rojo)
+					float porcentaje = (float)vida / vidaMax;
+					if (porcentaje < 0) porcentaje = 0;
+					
+					sf::RectangleShape barraActual(sf::Vector2f(200 * porcentaje, 20));
+					barraActual.setPosition(50, 30);
+					
+					if (vida > 50) barraActual.setFillColor(sf::Color::Green);
+					else if (vida > 25) barraActual.setFillColor(sf::Color::Yellow);
+					else barraActual.setFillColor(sf::Color::Red);
+					
+					ventana.draw(barraActual);
+					
+					// 3. Texto encima de la barra
+					dibujarTexto("SAN MARTIN", 150, 40, sf::Color::White, 12);
+					
+					// --- PANEL DE INSTRUCCIONES ---
+					// Un fondo negro semitransparente abajo
+					sf::RectangleShape panelInstrucciones(sf::Vector2f(800, 50));
+					panelInstrucciones.setPosition(0, 550); // Abajo (asumiendo alto 600)
+					panelInstrucciones.setFillColor(sf::Color(0, 0, 0, 150));
+					ventana.draw(panelInstrucciones);
+					
+					// --- TEXTO DINÁMICO ---
+					std::string mensaje;
+					sf::Color colorTexto;
+					
+					if (modelo->getNivelActual()->hayEnemigosVivos()) {
+						// FASE 1: COMBATE
+						mensaje = "OBJETIVO: Destruye los maniquies (ESPACIO)";
+						colorTexto = sf::Color::White;
+					} else {
+						// FASE 2: ESCAPE (Solo aparece cuando rompes todo)
+						mensaje = "¡OBJETIVO CUMPLIDO! Ve a la zona Dorada";
+						colorTexto = sf::Color::Green; // Verde para indicar éxito
+					}
+					
+					// Dibujamos el mensaje centrado
+					dibujarTexto(mensaje, 400, 565, colorTexto, 18);
 				}
 			}
 			else if (estado == PAUSA) {
@@ -196,43 +238,78 @@ private:
 		}
 		
 		void dibujarJuego() {
-			Nivel* nivel = modelo->getNivelActual();
-			if (!nivel) return; // Seguridad
+			// 1. CALCULO DINÁMICO DE TAMAÑO
+			// Obtenemos el tamaño real de la ventana y lo dividimos por las celdas del mapa
+			float anchoVentana = (float)ventana.getSize().x;
+			float altoVentana = (float)ventana.getSize().y;
 			
-			// A. DIBUJAR MAPA (Celdas)
-			float tamCelda = 25.0f; // Tamaño de cada cuadradito
-			sf::RectangleShape celda(sf::Vector2f(tamCelda, tamCelda));
+			float bloqueX = anchoVentana / 30.0f; // Ancho de cada celda
+			float bloqueY = altoVentana / 20.0f;  // Alto de cada celda
 			
-			for (int y = 0; y < 24; y++) {
-				for (int x = 0; x < 44; x++) {
-					int tipo = nivel->getContenidoCelda(x, y);
+			// 2. DIBUJAR EL MAPA (GRID)
+			for (int i = 0; i < 20; i++) {      // Filas (Y)
+				for (int j = 0; j < 30; j++) {  // Columnas (X)
 					
-					// Colores simples por ahora (Placeholder)
-					if (tipo == PARED) celda.setFillColor(sf::Color(100, 50, 0)); // Marrón
-					else if (tipo == SUELO) celda.setFillColor(sf::Color(0, 100, 0)); // Verde
-					else if (tipo == AGUA) celda.setFillColor(sf::Color::Blue);
-					else if (tipo == SALIDA_NIVEL) celda.setFillColor(sf::Color::Yellow);
+					// Creamos la celda con el tamaño calculado
+					sf::RectangleShape celda(sf::Vector2f(bloqueX, bloqueY));
+					celda.setPosition(j * bloqueX, i * bloqueY);
 					
-					celda.setPosition(x * tamCelda, y * tamCelda);
+					// Obtenemos contenido
+					int contenido = 0;
+					if (modelo->getNivelActual()) {
+						contenido = modelo->getNivelActual()->getContenidoCelda(j, i);
+					}
+					
+					// --- COLORES ---
+					if (contenido == 1) { // PARED
+						celda.setFillColor(sf::Color(100, 100, 100)); 
+						celda.setOutlineThickness(-1);
+						celda.setOutlineColor(sf::Color::Black);
+					} 
+					else if (contenido == 4) { // SALIDA
+						celda.setFillColor(sf::Color(255, 215, 0, 150)); 
+						celda.setOutlineThickness(-2);
+						celda.setOutlineColor(sf::Color::Yellow);
+					}
+					else { // SUELO
+						celda.setFillColor(sf::Color(50, 50, 50)); 
+						celda.setOutlineThickness(1); 
+						celda.setOutlineColor(sf::Color(60, 60, 60)); 
+					}
+					
 					ventana.draw(celda);
 				}
 			}
 			
-			// B. DIBUJAR ENTIDADES (San Martín y Enemigos)
-			const std::vector<Entidad*>& lista = nivel->getEntidades();
-			for (Entidad* e : lista) {
-				sf::CircleShape forma(10.0f); // Radio 10
-				forma.setPosition(e->getX() * tamCelda, e->getY() * tamCelda);
+			// 3. DIBUJAR ENTIDADES
+			if (modelo->getNivelActual()) {
+				const std::vector<Entidad*>& entidades = modelo->getNivelActual()->getEntidades();
 				
-				if (e->getTipo() == "PROCER") {
-					forma.setFillColor(sf::Color::White); // San Martín es Blanco (Patria)
-				} else if (e->getTipo() == "REALISTA") {
-					forma.setFillColor(sf::Color::Red);   // Realistas Rojos
-				} else if (e->getTipo() == "ALIADO") {
-					forma.setFillColor(sf::Color::Blue); // Granaderos azules
+				// Calculamos un radio que entre bien en la celda (usamos el menor lado para que sea redondo)
+				float radio = (std::min(bloqueX, bloqueY) / 2.5f);
+				
+				for (Entidad* e : entidades) {
+					if (!e->estaVivo()) continue;
+					
+					sf::CircleShape forma(radio); 
+					
+					// Centramos el círculo en la celda rectangular
+					float posX = e->getX() * bloqueX + (bloqueX / 2) - radio;
+					float posY = e->getY() * bloqueY + (bloqueY / 2) - radio;
+					
+					forma.setPosition(posX, posY);
+					
+					// Colores
+					if (e->getTipo() == "PROCER") forma.setFillColor(sf::Color::White);
+					else if (e->getTipo() == "REALISTA") forma.setFillColor(sf::Color::Red);
+					else if (e->getTipo() == "ALIADO") forma.setFillColor(sf::Color::Blue);
+					
+					// --- NUEVO: MUÑECO DE PRÁCTICA (Color Madera/Marrón) ---
+					else if (e->getTipo() == "PRACTICA") {
+						forma.setFillColor(sf::Color(139, 69, 19)); // Marrón
+					}
+					ventana.draw(forma);
 				}
-				
-				ventana.draw(forma);
 			}
 		}
 		

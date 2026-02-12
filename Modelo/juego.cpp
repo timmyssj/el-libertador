@@ -272,15 +272,19 @@ void Juego::atacarConSanMartin() {
 	for (Entidad* e : entidades) {
 		if (e == heroe) continue;
 		
-		if (e->getTipo() == "REALISTA" && e->estaVivo()) {
+		// --- AQUÍ ESTÁ EL CAMBIO ---
+		// Ahora permitimos atacar a REALISTA o PRACTICA
+		if ((e->getTipo() == "REALISTA" || e->getTipo() == "PRACTICA") && e->estaVivo()) {
+			
 			float dx = e->getX() - heroe->getX();
 			float dy = e->getY() - heroe->getY();
 			float dist = std::sqrt(dx*dx + dy*dy);
 			
 			if (dist < 1.5f) {
-				// Casteo y daño
 				Personaje* p = static_cast<Personaje*>(e);
-				p->recibirDanio(100.0f);
+				p->recibirDanio(100.0f); // Muerte instantánea al muñeco
+				
+				// Opcional: Sonido de madera rompiéndose
 			}
 		}
 	}

@@ -49,7 +49,10 @@ const std::vector<Entidad*>& Nivel::getEntidades() { return entidades; }
 
 bool Nivel::hayEnemigosVivos() {
 	for (Entidad* e : entidades) {
-		if (e->getTipo() == "REALISTA" && e->estaVivo()) return true;
+		// Si hay un Realista O un Muñeco de Práctica vivo, devuelve true
+		if ((e->getTipo() == "REALISTA" || e->getTipo() == "PRACTICA") && e->estaVivo()) {
+			return true;
+		}
 	}
-	return false;
+	return false; // Solo devuelve false si limpiaste todo
 }
