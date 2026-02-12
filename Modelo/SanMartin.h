@@ -15,15 +15,16 @@ public:
 	SanMartin(float startX, float startY) 
 		: Personaje(startX, startY, 100.0f, 1.0f) { // 100 vida, 1.0 velocidad
 		moral = 100.0f;
+		
 	}
 	
 	void actualizar() override {
-		// Lógica específica de San Martín por frame
+		// Lï¿½gica especï¿½fica de San Martï¿½n por frame
 	}
 	
 	//identidad
 	std::string getTipo() override {
-		return "PROCER"; // Clave para que la vista cargue la textura de San Martín
+		return "PROCER"; // Clave para que la vista cargue la textura de San Martï¿½n
 	}
 	
 	void arengarTropa() {

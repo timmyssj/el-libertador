@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 #include <algorithm> // Necesario para std::max o std::min
-#include "../Modelo/juego.h" // Cuidado con mayúsculas/minúsculas en el include
+#include "../Modelo/juego.h" // Cuidado con mayï¿½sculas/minï¿½sculas en el include
 
 class VentanaPrincipal {
 private:
@@ -90,7 +90,7 @@ private:
 				dibujarTexto("SELECCIONAR NIVEL", 550, 100, sf::Color::Yellow, 30);
 				
 				Menu* menu = modelo->getMenuNiveles();
-				// --- CORRECCIÓN CRÍTICA AQUÍ: getOpciones() ---
+				// --- CORRECCIï¿½N CRï¿½TICA AQUï¿½: getOpciones() ---
 				std::vector<std::string> opciones = menu->getOpciones(); 
 				// ----------------------------------------------
 				
@@ -164,7 +164,7 @@ private:
 						mensaje = "OBJETIVO: Destruye los maniquies (ESPACIO)";
 						colorTexto = sf::Color::White;
 					} else {
-						mensaje = "¡OBJETIVO CUMPLIDO! Ve a la zona Dorada";
+						mensaje = "ï¿½OBJETIVO CUMPLIDO! Ve a la zona Dorada";
 						colorTexto = sf::Color::Green; 
 					}
 					dibujarTexto(mensaje, 400, 565, colorTexto, 18);
@@ -172,7 +172,7 @@ private:
 			}
 			else if (estado == PAUSA) {
 				dibujarJuego(); 
-				sf::RectangleShape fondoOscuro(sf::Vector2f(1100, 600)); // Ajustado a tamaño ventana
+				sf::RectangleShape fondoOscuro(sf::Vector2f(1100, 600)); // Ajustado a tamaï¿½o ventana
 				fondoOscuro.setFillColor(sf::Color(0, 0, 0, 150)); 
 				ventana.draw(fondoOscuro);
 				
@@ -182,16 +182,16 @@ private:
 			else if (estado == CONFIGURACION) {
 				dibujarTexto("CONFIGURACION", 550, 100, sf::Color::Cyan, 30);
 				dibujarMenuGenerico(modelo->getMenuConfig(), 550, 200);
-				dibujarTexto("Usa IZQ/DER para cambiar valor", 250, 500, sf::Color::White, 15);
+				dibujarTexto("Usa IZQ/DER pa   ra cambiar valor", 250, 500, sf::Color::White, 15);
 			}
 			else if (estado == GAME_OVER) {
-				dibujarTexto("¡DERROTA!", 550, 200, sf::Color::Red, 60);
-				dibujarTexto("Presiona ESC para volver al Menú", 550, 400, sf::Color::White, 20);
+				dibujarTexto("ï¿½DERROTA!", 550, 200, sf::Color::Red, 60);
+				dibujarTexto("Presiona ESC para volver al Menï¿½", 550, 400, sf::Color::White, 20);
 			}
 			else if (estado == VICTORIA) {
-				dibujarTexto("¡VICTORIA!", 550, 200, sf::Color::Green, 60);
+				dibujarTexto("ï¿½VICTORIA!", 550, 200, sf::Color::Green, 60);
 				dibujarTexto("Has liberado esta zona.", 550, 300, sf::Color::White, 20);
-				dibujarTexto("Presiona ESC para volver al Menú", 550, 400, sf::Color::White, 20);
+				dibujarTexto("Presiona ESC para volver al Menï¿½", 550, 400, sf::Color::White, 20);
 			}
 			
 			ventana.display(); 
