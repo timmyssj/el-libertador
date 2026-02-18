@@ -1,51 +1,81 @@
 #ifndef ENEMIGO_H
 #define ENEMIGO_H
 
-#include "personaje.h"
-#include "SanMartin.h"
+#include "Personaje.h"
+#include "SanMartin.h" 
 #include <cmath>
+#include <iostream>
+#include <vector>
 
 class Enemigo : public Personaje {
 private:
 	SanMartin* objetivo;
-	float rangoVision;
-	int cooldownAtaque; // <--- NUEVO: Contador para esperar entre golpes
+	std::vector<sf::Texture> animDerecha;
+	std::vector<sf::Texture> animIzquierda;
+	std::vector<sf::Texture> animArriba;
+	std::vector<sf::Texture> animAbajo;
+	
+	int cooldownAtaque;
 	
 public:
+	// VELOCIDAD AUMENTADA: 0.10f
 	Enemigo(float x, float y, SanMartin* heroe) 
-		: Personaje(x, y, 50, 0.03f) { // 50 HP, Velocidad lenta
-		
+		: Personaje(x, y, 50, 0.10f) {
 		objetivo = heroe;
-		rangoVision = 6.0f;
-		cooldownAtaque = 0; // Al principio está listo para atacar
+		cooldownAtaque = 0;
+		cargarTextura(); 
 	}
 	
 	std::string getTipo() override { return "REALISTA"; }
 	
-	void actualizar() override {
-		// Bajar el contador si es mayor a 0
-		if (cooldownAtaque > 0) cooldownAtaque--;
-		
-		if (!objetivo || !objetivo->estaVivo()) return;
-		
-		// --- IA DE PERSECUCIÓN ---
-		float dx = objetivo->getX() - x;
-		float dy = objetivo->getY() - y;
-		float dist = std::sqrt(dx*dx + dy*dy);
-		
-		// Si te ve, te persigue
-		if (dist < rangoVision && dist > 0.8f) { // Se detiene un poco antes de chocarte
-			float dirX = dx / dist;
-			float dirY = dy / dist;
-			moverse(dirX, dirY);
+	void cargarSecuencia(std::vector<sf::Texture>& vector, std::string nombreBase, int cantidad) {
+		for (int i = 1; i <= cantidad; i++) {
+			sf::Texture t;
+			// RUTA CORREGIDA: sprites/
+			std::string ruta = "sprites/" + nombreBase + "_" + std::to_string(i) + ".png";
+			if (t.loadFromFile(ruta)) vector.push_back(t);
 		}
 	}
 	
-	// --- NUEVO MÉTODO: Intentar atacar ---
-	// Devuelve true si pegó el golpe, false si estaba recargando
+	void cargarTextura() override {
+		cargarSecuencia(animDerecha, "realista_derecha", 4);
+		cargarSecuencia(animIzquierda, "realista_isquierda", 4); // Tu archivo dice 'isquierda'
+		cargarSecuencia(animArriba, "realista_atras", 4);
+		
+		sf::Texture tFrente;
+		if(tFrente.loadFromFile("sprites/realista_frente.png")) { 
+			animAbajo.push_back(tFrente);
+		}
+		
+		if (!animAbajo.empty()) sprite.setTexture(animAbajo[0]);
+	}
+	
+	void actualizar() override {
+		if (cooldownAtaque > 0) cooldownAtaque--;
+		
+		if (objetivo && objetivo->estaVivo()) {
+			float dx = objetivo->getX() - x;
+			float dy = objetivo->getY() - y;
+			float dist = std::sqrt(dx*dx + dy*dy);
+			
+			if (dist < 8.0f && dist > 0.8f) { // Aumenté un poco la visión también
+				moverse(dx/dist, dy/dist);
+			} else {
+				resetearMovimiento(); 
+			}
+		}
+		
+		switch (direccionActual) {
+		case DERECHA:   reproducirAnimacion(animDerecha); break;
+		case IZQUIERDA: reproducirAnimacion(animIzquierda); break;
+		case ARRIBA:    reproducirAnimacion(animArriba); break;
+		case ABAJO:     reproducirAnimacion(animAbajo); break;
+		}
+	}
+	
 	bool intentarAtacar() {
 		if (cooldownAtaque == 0) {
-			cooldownAtaque = 60; // Espera 60 frames (aprox 1 segundo) para volver a pegar
+			cooldownAtaque = 60; 
 			return true;
 		}
 		return false;

@@ -7,25 +7,20 @@
 class Menu {
 private:
 	std::vector<std::string> opciones;
-	int indiceSeleccionado;
+	int indiceSeleccionado; // Usaremos este nombre siempre
 	
 public:
-	// Constructor
 	Menu(std::vector<std::string> listaOpciones) {
 		opciones = listaOpciones;
 		indiceSeleccionado = 0;
 	}
 	
-	// --- CORRECCIÓN 1: SETTER ---
 	void setOpciones(const std::vector<std::string>& nuevasOpciones) {
 		opciones = nuevasOpciones;
-		indiceSeleccionado = 0; // Reiniciamos el cursor usando la variable correcta
+		indiceSeleccionado = 0; 
 	}
 	
-	// --- CORRECCIÓN 2: GETTER (Faltaba esto para que la Ventana funcione) ---
-	std::vector<std::string> getOpciones() const {
-		return opciones;
-	}
+	std::vector<std::string> getOpciones() const { return opciones; }
 	
 	void moverArriba() {
 		indiceSeleccionado--;

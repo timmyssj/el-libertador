@@ -13,14 +13,22 @@ private:
 	Juego* modelo; 
 	sf::Font fuente; 
 	
+	sf::Texture texSanMartin;
+	sf::Texture texEnemigo;
+	sf::Texture texGranadero;
+	sf::Texture texSuelo;
+	sf::Texture texPared;
+	
 public:
 	VentanaPrincipal(Juego* j) : modelo(j) {
 		ventana.create(sf::VideoMode(1100, 600), "San Martin: El Libertador");
 		ventana.setFramerateLimit(60);
 		
-		if (!fuente.loadFromFile("PressStart2P.ttf")) {
-			// Manejo de error si no hay fuente
+		if (!fuente.loadFromFile("PressStart2P.ttf")) {// Manejo de error si no hay fuente
+			
 		}
+		
+		
 	}
 	
 	void ejecutar() {
@@ -202,53 +210,65 @@ private:
 		void dibujarJuego() {
 			float anchoVentana = (float)ventana.getSize().x;
 			float altoVentana = (float)ventana.getSize().y;
-			
 			float bloqueX = anchoVentana / 30.0f; 
 			float bloqueY = altoVentana / 20.0f;  
 			
+			// 1. DIBUJAR MAPA (Cuadrados de colores básicos para el suelo)
 			for (int i = 0; i < 20; i++) {       
 				for (int j = 0; j < 30; j++) {   
 					sf::RectangleShape celda(sf::Vector2f(bloqueX, bloqueY));
 					celda.setPosition(j * bloqueX, i * bloqueY);
 					
 					int contenido = 0;
-					if (modelo->getNivelActual()) {
+					if (modelo->getNivelActual()) 
 						contenido = modelo->getNivelActual()->getContenidoCelda(j, i);
-					}
 					
-					if (contenido == 1) { // PARED
-						celda.setFillColor(sf::Color(100, 100, 100)); 
-						celda.setOutlineThickness(-1); celda.setOutlineColor(sf::Color::Black);
-					} 
-					else if (contenido == 4) { // SALIDA
-						celda.setFillColor(sf::Color(255, 215, 0, 150)); 
-					}
-					else { // SUELO
-						celda.setFillColor(sf::Color(50, 50, 50)); 
-						celda.setOutlineThickness(1); celda.setOutlineColor(sf::Color(60, 60, 60)); 
-					}
+					// Colores simples para el mapa (luego pondremos texturas aquí también)
+					if (contenido == 1) celda.setFillColor(sf::Color(100, 100, 100)); // PARED
+					else if (contenido == 4) celda.setFillColor(sf::Color(255, 215, 0, 100)); // SALIDA
+					else celda.setFillColor(sf::Color(50, 50, 50)); // SUELO
+					
+					celda.setOutlineThickness(1);
+					celda.setOutlineColor(sf::Color(40, 40, 40));
 					ventana.draw(celda);
 				}
 			}
 			
+			// 2. DIBUJAR PERSONAJES (SOLO SPRITES)
 			if (modelo->getNivelActual()) {
 				const std::vector<Entidad*>& entidades = modelo->getNivelActual()->getEntidades();
-				float radio = (std::min(bloqueX, bloqueY) / 2.5f);
 				
 				for (Entidad* e : entidades) {
 					if (!e->estaVivo()) continue;
 					
-					sf::CircleShape forma(radio); 
-					float posX = e->getX() * bloqueX + (bloqueX / 2) - radio;
-					float posY = e->getY() * bloqueY + (bloqueY / 2) - radio;
-					forma.setPosition(posX, posY);
+					// Intentamos tratarlo como Personaje para sacarle el sprite
+					Personaje* p = dynamic_cast<Personaje*>(e);
 					
-					if (e->getTipo() == "PROCER") forma.setFillColor(sf::Color::White);
-					else if (e->getTipo() == "REALISTA") forma.setFillColor(sf::Color::Red);
-					else if (e->getTipo() == "ALIADO") forma.setFillColor(sf::Color::Blue);
-					else if (e->getTipo() == "PRACTICA") forma.setFillColor(sf::Color(139, 69, 19)); 
-					
-					ventana.draw(forma);
+					if (p) {
+						sf::Sprite& sprite = p->getSprite(); 
+						
+						// AJUSTAMOS TAMAÑO Y POSICIÓN
+						sprite.setPosition(p->getX() * bloqueX, p->getY() * bloqueY);
+						
+						// Escalar para que entre en el bloque
+						if (sprite.getTexture()) {
+							// Un pequeño ajuste: hacemos el sprite un 20% más grande que el bloque 
+							// para que se vea más heroico y se solape un poco (efecto 2.5D)
+							float factorEscala = 1.2f; 
+							
+							float escalaX = (bloqueX / sprite.getTexture()->getSize().x) * factorEscala;
+							float escalaY = (bloqueY / sprite.getTexture()->getSize().y) * factorEscala;
+							
+							sprite.setScale(escalaX, escalaY);
+							
+							// Ajustamos origen para centrarlo si lo agrandamos
+							// (Opcional, si se ve desencajado borra estas dos lineas)
+							// sprite.setOrigin(sprite.getTexture()->getSize().x / 2, sprite.getTexture()->getSize().y / 2);
+							// sprite.move(bloqueX / 2, bloqueY / 2);
+						}
+						
+						ventana.draw(sprite);
+					}
 				}
 			}
 		}

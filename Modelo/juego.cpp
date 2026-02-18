@@ -237,6 +237,9 @@ void Juego::actualizar() {
 	if (estadoActual == JUGANDO && nivelActual != nullptr) {
 		nivelActual->actualizar();
 		SanMartin* heroe = nivelActual->getHeroe();
+		if (heroe) heroe->resetearMovimiento();
+		
+		nivelActual->actualizar();
 		
 		// Derrota
 		if (!heroe->estaVivo()) {
