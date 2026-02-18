@@ -247,25 +247,31 @@ private:
 					if (p) {
 						sf::Sprite& sprite = p->getSprite(); 
 						
-						// AJUSTAMOS TAMAÑO Y POSICIÓN
-						sprite.setPosition(p->getX() * bloqueX, p->getY() * bloqueY);
+						// 1. AJUSTE DE ESCALA (AGRANDAR)
+						// Hacemos que el sprite sea un 50% más grande que la celda (1.5f)
+						float factorEscala = 1.5f; 
 						
-						// Escalar para que entre en el bloque
 						if (sprite.getTexture()) {
-							// Un pequeño ajuste: hacemos el sprite un 20% más grande que el bloque 
-							// para que se vea más heroico y se solape un poco (efecto 2.5D)
-							float factorEscala = 1.2f; 
-							
 							float escalaX = (bloqueX / sprite.getTexture()->getSize().x) * factorEscala;
 							float escalaY = (bloqueY / sprite.getTexture()->getSize().y) * factorEscala;
-							
 							sprite.setScale(escalaX, escalaY);
-							
-							// Ajustamos origen para centrarlo si lo agrandamos
-							// (Opcional, si se ve desencajado borra estas dos lineas)
-							// sprite.setOrigin(sprite.getTexture()->getSize().x / 2, sprite.getTexture()->getSize().y / 2);
-							// sprite.move(bloqueX / 2, bloqueY / 2);
 						}
+						
+						// 2. AJUSTE DE POSICIÓN (CENTRAR Y APOYAR PIES)
+						// Al ser más grande, si lo dibujamos en (0,0) de la celda, se saldrá hacia abajo y derecha.
+						// Queremos que los "pies" del personaje coincidan con la base de la celda.
+						
+						float anchoSprite = sprite.getGlobalBounds().width;
+						float altoSprite = sprite.getGlobalBounds().height;
+						
+						// Centrar horizontalmente:
+						float posX = (p->getX() * bloqueX) + (bloqueX / 2) - (anchoSprite / 2);
+						
+						// Alinear abajo verticalmente (Pies en el suelo):
+						// Posición base de la celda + Altura celda - Altura Sprite + Un pequeño offset (ej: 5px) para que no flote
+						float posY = (p->getY() * bloqueY) + bloqueY - altoSprite;
+						
+						sprite.setPosition(posX, posY);
 						
 						ventana.draw(sprite);
 					}

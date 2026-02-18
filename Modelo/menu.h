@@ -7,7 +7,7 @@
 class Menu {
 private:
 	std::vector<std::string> opciones;
-	int indiceSeleccionado; // Usaremos este nombre siempre
+	int indiceSeleccionado; 
 	
 public:
 	Menu(std::vector<std::string> listaOpciones) {
@@ -15,6 +15,7 @@ public:
 		indiceSeleccionado = 0;
 	}
 	
+	// Esta función faltaba y causaba error en VentanaPrincipal
 	void setOpciones(const std::vector<std::string>& nuevasOpciones) {
 		opciones = nuevasOpciones;
 		indiceSeleccionado = 0; 

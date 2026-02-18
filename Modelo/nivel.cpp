@@ -70,3 +70,4 @@ bool Nivel::esCeldaOcupada(int x, int y) {
 	}
 	return false; // Está libre
 }
+

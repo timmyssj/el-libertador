@@ -10,7 +10,6 @@ enum Direccion { ABAJO, ARRIBA, IZQUIERDA, DERECHA };
 class Personaje : public Entidad {
 protected:
 	float vida;
-	float velocidad;
 	Direccion direccionActual;
 	
 	// Animación
@@ -20,17 +19,26 @@ protected:
 	float duracionFrame;
 	bool estaMoviendose;
 	
+	// MOVIMIENTO POR BLOQUES
+	int cooldownMovimiento; 
+	int tiempoEntrePasos; 
+	
 public:
-	Personaje(float x, float y, float vida, float velocidad) 
-		: Entidad(x, y), vida(vida), velocidad(velocidad) {
+	// Constructor actualizado
+	Personaje(float x, float y, float vida, int delayPasos = 8) 
+		: Entidad(x, y), vida(vida) {
+		
 		direccionActual = ABAJO;
 		frameActual = 0;
 		tiempoFrame = 0;
 		duracionFrame = 0.15f; 
 		estaMoviendose = false;
+		
+		cooldownMovimiento = 0;
+		tiempoEntrePasos = delayPasos; 
 	}
 	
-	virtual ~Personaje() {} // Destructor virtual importante
+	virtual ~Personaje() {}
 	
 	sf::Sprite& getSprite() { return sprite; }
 	float getVida() { return vida; }
@@ -39,38 +47,42 @@ public:
 	void recibirDanio(float cantidad) { vida -= cantidad; if (vida < 0) vida = 0; }
 	void curarCompleto() { vida = 100; }
 	
-	void resetearMovimiento() { estaMoviendose = false; }
+	void resetearMovimiento() { 
+		estaMoviendose = false; 
+		if (cooldownMovimiento > 0) cooldownMovimiento--; 
+	}
 	
 	void moverse(float dx, float dy) {
-		x += dx * velocidad;
-		y += dy * velocidad;
-		estaMoviendose = true;
-		
-		if (dx > 0) direccionActual = DERECHA;
-		if (dx < 0) direccionActual = IZQUIERDA;
-		if (dy > 0) direccionActual = ABAJO;
-		if (dy < 0) direccionActual = ARRIBA;
+		if (cooldownMovimiento == 0) {
+			x += dx; 
+			y += dy;
+			cooldownMovimiento = tiempoEntrePasos;
+			estaMoviendose = true;
+			
+			if (dx > 0) direccionActual = DERECHA;
+			if (dx < 0) direccionActual = IZQUIERDA;
+			if (dy > 0) direccionActual = ABAJO;
+			if (dy < 0) direccionActual = ARRIBA;
+		}
 	}
 	
 	void reproducirAnimacion(const std::vector<sf::Texture>& animacion) {
 		if (animacion.empty()) return;
 		
-		if (!estaMoviendose) {
+		if (cooldownMovimiento > 0 || estaMoviendose) {
+			tiempoFrame += 1.0f / 60.0f; 
+			if (tiempoFrame >= duracionFrame) {
+				tiempoFrame = 0;
+				frameActual++;
+				if (frameActual >= (int)animacion.size()) frameActual = 0;
+			}
+			sprite.setTexture(animacion[frameActual]);
+		} else {
 			frameActual = 0;
 			sprite.setTexture(animacion[0]);
-			return;
 		}
-		
-		tiempoFrame += 1.0f / 60.0f; // Asumiendo 60 FPS
-		if (tiempoFrame >= duracionFrame) {
-			tiempoFrame = 0;
-			frameActual++;
-			if (frameActual >= (int)animacion.size()) frameActual = 0;
-		}
-		sprite.setTexture(animacion[frameActual]);
 	}
 	
-	// Al definir esto puro (=0), obligamos a los hijos a tener la función.
 	virtual void cargarTextura() = 0; 
 };
 

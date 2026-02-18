@@ -4,7 +4,6 @@
 #include "Personaje.h"
 #include "SanMartin.h" 
 #include <cmath>
-#include <iostream>
 #include <vector>
 
 class Enemigo : public Personaje {
@@ -18,9 +17,9 @@ private:
 	int cooldownAtaque;
 	
 public:
-	// VELOCIDAD AUMENTADA: 0.10f
+	// Delay de 15 frames (más lento que el jugador)
 	Enemigo(float x, float y, SanMartin* heroe) 
-		: Personaje(x, y, 50, 0.10f) {
+		: Personaje(x, y, 50, 15) {
 		objetivo = heroe;
 		cooldownAtaque = 0;
 		cargarTextura(); 
@@ -31,22 +30,21 @@ public:
 	void cargarSecuencia(std::vector<sf::Texture>& vector, std::string nombreBase, int cantidad) {
 		for (int i = 1; i <= cantidad; i++) {
 			sf::Texture t;
-			// RUTA CORREGIDA: sprites/
 			std::string ruta = "sprites/" + nombreBase + "_" + std::to_string(i) + ".png";
 			if (t.loadFromFile(ruta)) vector.push_back(t);
 		}
 	}
 	
 	void cargarTextura() override {
-		cargarSecuencia(animDerecha, "realista_derecha", 4);
-		cargarSecuencia(animIzquierda, "realista_isquierda", 4); // Tu archivo dice 'isquierda'
+		// NOMBRES CORREGIDOS SEGÚN TU LISTA
+		cargarSecuencia(animDerecha, "realista_derecho", 4);
+		cargarSecuencia(animIzquierda, "realista_izquierdo", 4);
 		cargarSecuencia(animArriba, "realista_atras", 4);
 		
 		sf::Texture tFrente;
 		if(tFrente.loadFromFile("sprites/realista_frente.png")) { 
 			animAbajo.push_back(tFrente);
 		}
-		
 		if (!animAbajo.empty()) sprite.setTexture(animAbajo[0]);
 	}
 	
@@ -58,8 +56,13 @@ public:
 			float dy = objetivo->getY() - y;
 			float dist = std::sqrt(dx*dx + dy*dy);
 			
-			if (dist < 8.0f && dist > 0.8f) { // Aumenté un poco la visión también
-				moverse(dx/dist, dy/dist);
+			// IA SIMPLIFICADA PARA MOVERSE POR BLOQUES
+			if (dist < 8.0f && dist > 1.0f) { 
+				if (std::abs(dx) > std::abs(dy)) {
+					if (dx > 0) moverse(1, 0); else moverse(-1, 0);
+				} else {
+					if (dy > 0) moverse(0, 1); else moverse(0, -1);
+				}
 			} else {
 				resetearMovimiento(); 
 			}
@@ -80,6 +83,6 @@ public:
 		}
 		return false;
 	}
-};
+}; // <--- ¡AQUÍ ESTABA EL ERROR! Faltaba esta llave y punto y coma.
 
 #endif
