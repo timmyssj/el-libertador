@@ -1,14 +1,11 @@
 #include "juego.h"
 #include "NivelTutorial.h"
 #include "enemigo.h"
-#include "NivelEspana.h" // Asegúrate de tener este archivo o comenta esta línea si aún no lo creaste
+#include "NivelEspana.h"
 #include <iostream>
-#include <fstream>
 #include <cmath>
-#include <vector>
-#include <string> 
+#include <fstream> // Necesario para archivos
 
-// 1. CONSTRUCTOR
 Juego::Juego() {
 	estadoActual = EN_MENU;
 	estadoAnterior = EN_MENU;
@@ -16,23 +13,20 @@ Juego::Juego() {
 	volumenMusica = 50;
 	volumenSonidos = 50;
 	
-	// Opciones iniciales
 	menuPrincipal = new Menu({"NUEVA PARTIDA", "CONTINUAR", "CONFIGURACION", "SALIR"});
 	menuPausa = new Menu({"CONTINUAR", "CONFIGURACION", "SALIR AL MENU"});
 	
 	nivelMaximoDesbloqueado = 0; 
+	nivelJugandoId = 0; // Inicializamos el rastreador
 	
-	// Menú de Niveles
 	menuNiveles = new Menu({"0. TUTORIAL", "1. BATALLA EN ESPANA", "VOLVER"});
 	
-	// Menú Configuración
 	menuConfig = new Menu({"Musica", "Sonidos", "Volver"}); 
 	actualizarTextosConfig(); 
 	
 	nivelActual = nullptr;
 }
 
-// 2. DESTRUCTOR
 Juego::~Juego() {
 	delete menuPrincipal;
 	delete menuPausa;
@@ -41,7 +35,35 @@ Juego::~Juego() {
 	if (nivelActual) delete nivelActual;
 }
 
-// --- PROCESAMIENTO DE TECLAS ---
+// --- ARCHIVOS BINARIOS ---
+
+void Juego::guardarProgreso() {
+	// Abrimos en modo binario
+	std::ofstream archivo("progreso.dat", std::ios::binary);
+	if (archivo.is_open()) {
+		// Guardamos los bytes crudos de la variable (más seguro y rápido)
+		archivo.write(reinterpret_cast<char*>(&nivelMaximoDesbloqueado), sizeof(nivelMaximoDesbloqueado));
+		archivo.close();
+		std::cout << "[INFO] Partida guardada (Binario): Nivel " << nivelMaximoDesbloqueado << std::endl;
+	} else {
+		std::cout << "[ERROR] No se pudo crear progreso.dat" << std::endl;
+	}
+}
+
+void Juego::cargarProgreso() {
+	// Leemos en modo binario
+	std::ifstream archivo("progreso.dat", std::ios::binary);
+	if (archivo.is_open()) {
+		archivo.read(reinterpret_cast<char*>(&nivelMaximoDesbloqueado), sizeof(nivelMaximoDesbloqueado));
+		archivo.close();
+		std::cout << "[INFO] Partida cargada (Binario): Nivel " << nivelMaximoDesbloqueado << std::endl;
+	} else {
+		std::cout << "[INFO] No hay archivo .dat. Empezando nueva partida." << std::endl;
+		nivelMaximoDesbloqueado = 0;
+	}
+}
+
+// -------------------------
 
 void Juego::procesarTeclaArriba() {
 	if (estadoActual == EN_MENU) menuPrincipal->moverArriba();
@@ -54,8 +76,7 @@ void Juego::procesarTeclaArriba() {
 			int tx = (int)heroe->getX();
 			int ty = (int)heroe->getY() - 1; 
 			
-			if (nivelActual->getContenidoCelda(tx, ty) != PARED 
-				&& !nivelActual->esCeldaOcupada(tx, ty)) { 
+			if (nivelActual->getContenidoCelda(tx, ty) != PARED && !nivelActual->esCeldaOcupada(tx, ty)) { 
 				heroe->moverse(0, -1);
 			}
 		}
@@ -73,8 +94,7 @@ void Juego::procesarTeclaAbajo() {
 			int tx = (int)heroe->getX();
 			int ty = (int)heroe->getY() + 1; 
 			
-			if (nivelActual->getContenidoCelda(tx, ty) != PARED 
-				&& !nivelActual->esCeldaOcupada(tx, ty)) { 
+			if (nivelActual->getContenidoCelda(tx, ty) != PARED && !nivelActual->esCeldaOcupada(tx, ty)) { 
 				heroe->moverse(0, 1);
 			}
 		}
@@ -100,8 +120,7 @@ void Juego::procesarTeclaIzquierda() {
 			int tx = (int)heroe->getX() - 1;
 			int ty = (int)heroe->getY(); 
 			
-			if (nivelActual->getContenidoCelda(tx, ty) != PARED 
-				&& !nivelActual->esCeldaOcupada(tx, ty)) { 
+			if (nivelActual->getContenidoCelda(tx, ty) != PARED && !nivelActual->esCeldaOcupada(tx, ty)) { 
 				heroe->moverse(-1, 0);
 			}
 		}
@@ -127,8 +146,7 @@ void Juego::procesarTeclaDerecha() {
 			int tx = (int)heroe->getX() + 1;
 			int ty = (int)heroe->getY();
 			
-			if (nivelActual->getContenidoCelda(tx, ty) != PARED 
-				&& !nivelActual->esCeldaOcupada(tx, ty)) { 
+			if (nivelActual->getContenidoCelda(tx, ty) != PARED && !nivelActual->esCeldaOcupada(tx, ty)) { 
 				heroe->moverse(1, 0);
 			}
 		}
@@ -136,36 +154,32 @@ void Juego::procesarTeclaDerecha() {
 }
 
 void Juego::procesarTeclaEnter() {
-	// --- CASO 1: MENU PRINCIPAL ---
 	if (estadoActual == EN_MENU) {
 		int op = menuPrincipal->getOpcionActual();
-		
 		if (op == 0) { // NUEVA PARTIDA
-			nivelMaximoDesbloqueado = 0; // Reseteamos progreso
-			guardarProgreso(); // Sobrescribimos el archivo
-			
+			nivelMaximoDesbloqueado = 0; 
+			guardarProgreso(); 
 			estadoActual = SELECCION_NIVEL;
 			menuNiveles->reiniciarCursor();
 		}
-		else if (op == 1) { // Opción: CONTINUAR CAMPAÑA
-			cargarProgreso(); // <--- IMPORTANTE
-			
+		else if (op == 1) { // CONTINUAR
+			cargarProgreso(); 
 			estadoActual = SELECCION_NIVEL;
 			menuNiveles->reiniciarCursor();
 		}
-		else if (op == 2) { // CONFIGURACION
+		else if (op == 2) { 
 			estadoActual = CONFIGURACION;
 			menuConfig->reiniciarCursor();
 		}
-		else if (op == 3) { // SALIR
+		else if (op == 3) {
 			estadoActual = SALIR;
 		}
 	}
-	// --- CASO 2: SELECCION DE NIVEL ---
 	else if (estadoActual == SELECCION_NIVEL) {
 		int op = menuNiveles->getOpcionActual();
 		
-		if (op == 2) { // VOLVER
+		// El botón volver ahora es dinámico (la última opción)
+		if (op == menuNiveles->getCantidadOpciones() - 1) {
 			estadoActual = EN_MENU;
 			return;
 		}
@@ -176,20 +190,21 @@ void Juego::procesarTeclaEnter() {
 			if (op == 0) nivelActual = new NivelTutorial();
 			else if (op == 1) nivelActual = new NivelEspana(); 
 			
+			// --- NUEVA LÓGICA: Memorizamos qué nivel acabamos de abrir ---
+			nivelJugandoId = op; 
+			
 			prepararNivel(nivelActual);
 			
 		} else {
 			std::cout << "Nivel Bloqueado!" << std::endl;
 		}
 	}
-	// --- CASO 3: HISTORIA ---
 	else if (estadoActual == INTRO_HISTORIA) {
 		paginaHistoriaActual++;
 		if (paginaHistoriaActual >= (int)lineasHistoria.size()) {
 			estadoActual = JUGANDO;
 		}
 	}
-	// --- CASO 4: PAUSA ---
 	else if (estadoActual == PAUSA) {
 		int op = menuPausa->getOpcionActual();
 		if (op == 0) { estadoActual = JUGANDO; }
@@ -204,10 +219,9 @@ void Juego::procesarTeclaEnter() {
 			menuPrincipal->reiniciarCursor();
 		}
 	}
-	// --- CASO 5: CONFIGURACION ---
 	else if (estadoActual == CONFIGURACION) {
 		int op = menuConfig->getOpcionActual();
-		if (op == 2) { // VOLVER
+		if (op == 2) { 
 			estadoActual = estadoAnterior; 
 		}
 	}
@@ -235,18 +249,16 @@ void Juego::teclaEscape() {
 
 void Juego::actualizar() {
 	if (estadoActual == JUGANDO && nivelActual != nullptr) {
-		nivelActual->actualizar();
+		
 		SanMartin* heroe = nivelActual->getHeroe();
 		if (heroe) heroe->resetearMovimiento();
 		
 		nivelActual->actualizar();
 		
-		// Derrota
 		if (!heroe->estaVivo()) {
 			estadoActual = GAME_OVER;
 		}
 		
-		// Combate Enemigo -> Heroe
 		const std::vector<Entidad*>& entidades = nivelActual->getEntidades();
 		for (Entidad* e : entidades) {
 			if (e->getTipo() == "REALISTA" && e->estaVivo()) {
@@ -254,7 +266,7 @@ void Juego::actualizar() {
 				float dy = e->getY() - heroe->getY();
 				float dist = std::sqrt(dx*dx + dy*dy);
 				
-				if (dist < 1.0f) {
+				if (dist <= 1.5f) { 
 					Enemigo* realista = static_cast<Enemigo*>(e);
 					if (realista->intentarAtacar()) {
 						heroe->recibirDanio(10); 
@@ -263,31 +275,17 @@ void Juego::actualizar() {
 			}
 		}
 		
-		// Victoria
 		int x = (int)heroe->getX();
 		int y = (int)heroe->getY();
 		
 		if (nivelActual->getContenidoCelda(x, y) == SALIDA_NIVEL) {
-			
 			if (!nivelActual->hayEnemigosVivos()) {
 				estadoActual = VICTORIA;
 				
-				// LÓGICA DE DESBLOQUEO SIMPLIFICADA
-				// 1. Obtenemos qué nivel estamos jugando (Truco sucio pero efectivo: por título)
-				std::string titulo = nivelActual->getTituloIntro();
-				
-				int nivelRecienCompletado = -1;
-				
-				// Identificamos el ID del nivel actual
-				if (titulo == "ENTRENAMIENTO BASICO") nivelRecienCompletado = 0;
-				else if (titulo == "NIVEL 1: BATALLA EN ESPANA") nivelRecienCompletado = 1;
-				// else if (titulo == "SAN LORENZO") nivelRecienCompletado = 2;
-				
-				// 2. Si ganamos un nivel que es igual al máximo que teníamos, desbloqueamos el siguiente
-				if (nivelRecienCompletado >= nivelMaximoDesbloqueado) {
-					nivelMaximoDesbloqueado = nivelRecienCompletado + 1;
-					
-					// --- AQUÍ GUARDAMOS ---
+				// --- NUEVA LÓGICA DE AVANCE ---
+				// Si el nivel que ganaste es igual al máximo que tenías, habilitas el siguiente
+				if (nivelJugandoId >= nivelMaximoDesbloqueado) { 
+					nivelMaximoDesbloqueado = nivelJugandoId + 1;
 					guardarProgreso(); 
 				}
 			}
@@ -302,20 +300,29 @@ void Juego::atacarConSanMartin() {
 	if (!heroe) return;
 	
 	const std::vector<Entidad*>& entidades = nivelActual->getEntidades();
+	bool golpeoAlgo = false;
 	
 	for (Entidad* e : entidades) {
 		if (e == heroe) continue;
 		
 		if ((e->getTipo() == "REALISTA" || e->getTipo() == "PRACTICA") && e->estaVivo()) {
+			
 			float dx = e->getX() - heroe->getX();
 			float dy = e->getY() - heroe->getY();
 			float dist = std::sqrt(dx*dx + dy*dy);
 			
-			if (dist < 1.5f) {
+			if (dist <= 2.2f) { 
 				Personaje* p = static_cast<Personaje*>(e);
-				p->recibirDanio(100.0f); 
+				
+				// --- CAMBIO: AHORA QUITA 15 EN VEZ DE 100 ---
+				p->recibirDanio(15.0f); 
+				golpeoAlgo = true;
 			}
 		}
+	}
+	
+	if (golpeoAlgo) {
+		std::cout << "[COMBATE] ¡ZAS! Golpeaste al enemigo." << std::endl;
 	}
 }
 
@@ -337,27 +344,5 @@ void Juego::prepararNivel(Nivel* nuevoNivel) {
 		estadoActual = INTRO_HISTORIA;
 	} else {
 		estadoActual = JUGANDO;
-	}
-}
-void Juego::guardarProgreso() {
-	std::ofstream archivo("progreso.txt"); // Usamos .txt para que puedas verlo fácil
-	if (archivo.is_open()) {
-		archivo << nivelMaximoDesbloqueado;
-		archivo.close();
-		std::cout << "--- PROGRESO GUARDADO: Nivel " << nivelMaximoDesbloqueado << " ---" << std::endl;
-	} else {
-		std::cout << "ERROR: No se pudo crear el archivo de guardado." << std::endl;
-	}
-}
-
-void Juego::cargarProgreso() {
-	std::ifstream archivo("progreso.txt");
-	if (archivo.is_open()) {
-		archivo >> nivelMaximoDesbloqueado;
-		archivo.close();
-		std::cout << "--- PROGRESO CARGADO: Nivel " << nivelMaximoDesbloqueado << " ---" << std::endl;
-	} else {
-		std::cout << "ARCHIVO NO ENCONTRADO. Empezando de 0." << std::endl;
-		nivelMaximoDesbloqueado = 0;
 	}
 }

@@ -21,6 +21,6 @@ public:
 	//Getters
 	float getX() const { return x;}
 	float getY() const { return y;}
-	bool estaVivo() const { return vivo; }
+	virtual bool estaVivo() { return vivo; }
 };
 #endif 

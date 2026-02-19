@@ -10,23 +10,23 @@ enum Direccion { ABAJO, ARRIBA, IZQUIERDA, DERECHA };
 class Personaje : public Entidad {
 protected:
 	float vida;
+	float vidaMax; // <--- NUEVO: Para poder calcular el porcentaje de la barra
+	
 	Direccion direccionActual;
 	
-	// Animación
 	sf::Sprite sprite;
 	int frameActual;
 	float tiempoFrame;
 	float duracionFrame;
 	bool estaMoviendose;
 	
-	// MOVIMIENTO POR BLOQUES
 	int cooldownMovimiento; 
 	int tiempoEntrePasos; 
 	
 public:
-	// Constructor actualizado
+	// Al nacer, la vidaMax es igual a la vida inicial
 	Personaje(float x, float y, float vida, int delayPasos = 8) 
-		: Entidad(x, y), vida(vida) {
+		: Entidad(x, y), vida(vida), vidaMax(vida) {
 		
 		direccionActual = ABAJO;
 		frameActual = 0;
@@ -42,10 +42,13 @@ public:
 	
 	sf::Sprite& getSprite() { return sprite; }
 	float getVida() { return vida; }
+	float getVidaMax() { return vidaMax; } // <--- NUEVO
 	Direccion getDireccion() { return direccionActual; }
 	
+	virtual bool estaVivo() { return vida > 0; }
+	
 	void recibirDanio(float cantidad) { vida -= cantidad; if (vida < 0) vida = 0; }
-	void curarCompleto() { vida = 100; }
+	void curarCompleto() { vida = vidaMax; }
 	
 	void resetearMovimiento() { 
 		estaMoviendose = false; 

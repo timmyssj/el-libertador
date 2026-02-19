@@ -213,7 +213,7 @@ private:
 			float bloqueX = anchoVentana / 30.0f; 
 			float bloqueY = altoVentana / 20.0f;  
 			
-			// 1. DIBUJAR MAPA (Cuadrados de colores básicos para el suelo)
+			// 1. DIBUJAR MAPA 
 			for (int i = 0; i < 20; i++) {       
 				for (int j = 0; j < 30; j++) {   
 					sf::RectangleShape celda(sf::Vector2f(bloqueX, bloqueY));
@@ -223,7 +223,6 @@ private:
 					if (modelo->getNivelActual()) 
 						contenido = modelo->getNivelActual()->getContenidoCelda(j, i);
 					
-					// Colores simples para el mapa (luego pondremos texturas aquí también)
 					if (contenido == 1) celda.setFillColor(sf::Color(100, 100, 100)); // PARED
 					else if (contenido == 4) celda.setFillColor(sf::Color(255, 215, 0, 100)); // SALIDA
 					else celda.setFillColor(sf::Color(50, 50, 50)); // SUELO
@@ -234,21 +233,18 @@ private:
 				}
 			}
 			
-			// 2. DIBUJAR PERSONAJES (SOLO SPRITES)
+			// 2. DIBUJAR PERSONAJES Y BARRAS DE VIDA
 			if (modelo->getNivelActual()) {
 				const std::vector<Entidad*>& entidades = modelo->getNivelActual()->getEntidades();
 				
 				for (Entidad* e : entidades) {
 					if (!e->estaVivo()) continue;
 					
-					// Intentamos tratarlo como Personaje para sacarle el sprite
 					Personaje* p = dynamic_cast<Personaje*>(e);
 					
 					if (p) {
 						sf::Sprite& sprite = p->getSprite(); 
 						
-						// 1. AJUSTE DE ESCALA (AGRANDAR)
-						// Hacemos que el sprite sea un 50% más grande que la celda (1.5f)
 						float factorEscala = 1.5f; 
 						
 						if (sprite.getTexture()) {
@@ -257,23 +253,47 @@ private:
 							sprite.setScale(escalaX, escalaY);
 						}
 						
-						// 2. AJUSTE DE POSICIÓN (CENTRAR Y APOYAR PIES)
-						// Al ser más grande, si lo dibujamos en (0,0) de la celda, se saldrá hacia abajo y derecha.
-						// Queremos que los "pies" del personaje coincidan con la base de la celda.
-						
 						float anchoSprite = sprite.getGlobalBounds().width;
 						float altoSprite = sprite.getGlobalBounds().height;
 						
-						// Centrar horizontalmente:
 						float posX = (p->getX() * bloqueX) + (bloqueX / 2) - (anchoSprite / 2);
-						
-						// Alinear abajo verticalmente (Pies en el suelo):
-						// Posición base de la celda + Altura celda - Altura Sprite + Un pequeño offset (ej: 5px) para que no flote
 						float posY = (p->getY() * bloqueY) + bloqueY - altoSprite;
 						
 						sprite.setPosition(posX, posY);
-						
 						ventana.draw(sprite);
+						
+						// --- NUEVO: BARRA DE VIDA FLOTANTE ---
+						// No le dibujamos barra flotante a San Martín porque él ya tiene una gigante en la UI (abajo o arriba de la pantalla)
+						if (e->getTipo() != "PROCER") {
+							
+							float anchoBarra = bloqueX * 0.8f; // La barra ocupará el 80% del ancho del bloque
+							float altoBarra = 5.0f;            // 6 píxeles de alto
+							
+							// Calculamos porcentaje (0.0 a 1.0)
+							float porcentajeVida = p->getVida() / p->getVidaMax();
+							if (porcentajeVida < 0) porcentajeVida = 0;
+							
+							// Fondo Rojo (Vida perdida)
+							sf::RectangleShape fondoBarra(sf::Vector2f(anchoBarra, altoBarra));
+							fondoBarra.setFillColor(sf::Color::Red);
+							
+							// Posición: Arriba de su cabeza (X centrada, Y un poco más arriba de la celda)
+							float barraX = (p->getX() * bloqueX) + (bloqueX / 2) - (anchoBarra / 2);
+							float barraY = (p->getY() * bloqueY) - 13.0f;
+							fondoBarra.setPosition(barraX, barraY);
+							
+							// Contorno negro para que resalte
+							fondoBarra.setOutlineThickness(1);
+							fondoBarra.setOutlineColor(sf::Color::Black);
+							
+							// Relleno Verde (Vida actual)
+							sf::RectangleShape barraVerde(sf::Vector2f(anchoBarra * porcentajeVida, altoBarra));
+							barraVerde.setFillColor(sf::Color::Green);
+							barraVerde.setPosition(barraX, barraY);
+							
+							ventana.draw(fondoBarra);
+							ventana.draw(barraVerde);
+						}
 					}
 				}
 			}

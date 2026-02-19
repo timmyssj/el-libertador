@@ -9,23 +9,30 @@ private:
 	sf::Texture texturaMunieco;
 	
 public:
-	Munieco(float x, float y) : Personaje(x, y, 30, 999) { // 999 porque no se mueve
-		// ...
+	// Delay de 999 porque el muñeco no camina
+	Munieco(float x, float y) : Personaje(x, y, 30, 999) { 
+		cargarTextura();
 	}
+	
 	std::string getTipo() override { return "PRACTICA"; }
 	
-	// ESTA FUNCIÓN FALTABA
 	void cargarTextura() override {
-		// En tu lista veo un archivo llamado "sable". Usaremos ese por ahora.
-		// Si más tarde agregas "munieco.png", cambia el nombre aquí.
-		if (!texturaMunieco.loadFromFile("sprites/sable.png")) {
-			std::cerr << "Falta imagen sprites/sable.png" << std::endl;
+		// Intento 1: Cargar la imagen del sable o muñeco
+		if (!texturaMunieco.loadFromFile("sprites/munieco.png")) {
+			
+			// PLAN B (Fallback): Si no hay sable, usamos un realista y lo pintamos de marrón
+			if (texturaMunieco.loadFromFile("sprites/realista_frente.png")) {
+				sprite.setColor(sf::Color(139, 69, 19)); // Código de color marrón madera
+			} else {
+				std::cerr << "Falta imagen para el Munieco" << std::endl;
+			}
 		}
+		
 		sprite.setTexture(texturaMunieco);
 	}
 	
 	void actualizar() override {
-		// Estático
+		// Estático, espera pacientemente a ser destruido
 	}
 };
 

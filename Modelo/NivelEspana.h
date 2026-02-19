@@ -2,6 +2,8 @@
 #define NIVEL_ESPANA_H
 
 #include "Nivel.h"
+#include <fstream>  // <--- IMPORTANTE: Para leer el archivo binario
+#include <iostream> // <--- IMPORTANTE: Para mostrar mensajes en consola
 
 class NivelEspana : public Nivel {
 public:
@@ -17,36 +19,44 @@ public:
 	}
 	
 	void cargarContenido() override {
-		inicializarMapaVacio();
+		// --- 1. LECTURA DEL MAPA BINARIO BLINDADO ---
+		std::ifstream archivoEntrada("nivel1.dat", std::ios::binary);
 		
-		// 1. AMBIENTACIÓN: CAMINO ÁRIDO
-		// Hacemos un camino central ancho con rocas a los lados
-		for(int y = 0; y < 20; y++) {
-			// Rocas dispersas (simulando terreno difícil)
-			if (y % 3 == 0) { mapa[y][2] = PARED; mapa[y][27] = PARED; }
-			if (y % 4 == 0) { mapa[y][5] = PARED; mapa[y][24] = PARED; }
+		if (archivoEntrada.is_open()) {
+			// Si el archivo existe, leemos la matriz 'mapa' completa de un solo golpe
+			archivoEntrada.read(reinterpret_cast<char*>(mapa), sizeof(mapa));
+			archivoEntrada.close();
+			std::cout << "[NIVEL] Mapa Espana cargado desde nivel1.dat" << std::endl;
+		} 
+		else {
+			std::cerr << "[ERROR] No se encontro nivel1.dat. Cargando mapa por defecto." << std::endl;
+			
+			// PLAN B: Si no generaste el archivo aún o se borró, usamos tu código original
+			inicializarMapaVacio();
+			
+			for(int y = 0; y < 20; y++) {
+				if (y % 3 == 0) { mapa[y][2] = PARED; mapa[y][27] = PARED; }
+				if (y % 4 == 0) { mapa[y][5] = PARED; mapa[y][24] = PARED; }
+			}
+			mapa[10][14] = PARED; mapa[10][15] = PARED;
+			mapa[11][14] = PARED; mapa[11][15] = PARED;
+			mapa[0][15] = SALIDA_NIVEL;
 		}
+		// --------------------------------------------
 		
-		// 2. OBSTÁCULOS CENTRALES (Carruaje volcado o ruinas)
-		mapa[10][14] = PARED; mapa[10][15] = PARED;
-		mapa[11][14] = PARED; mapa[11][15] = PARED;
+		// --- 2. POSICIONES EN EL NUEVO CAMPO DE BATALLA ---
 		
-		// 3. SALIDA (Norte)
-		mapa[0][15] = SALIDA_NIVEL;
-		
-		// 4. EL HÉROE (Sur)
-		referenciaHeroe = new SanMartin(15, 18);
+		// San Martín entra por el sur (abajo, en el camino de tierra)
+		referenciaHeroe = new SanMartin(15, 17);
 		entidades.push_back(referenciaHeroe);
 		
-		// 5. ENEMIGOS (Soldados Franceses)
-		// Están patrullando el norte
-		entidades.push_back(new Enemigo(5, 5, referenciaHeroe));
-		entidades.push_back(new Enemigo(20, 5, referenciaHeroe));
-		entidades.push_back(new Enemigo(12, 10, referenciaHeroe));
+		// Enemigos (Patrulla Francesa emboscada en el claro central)
+		entidades.push_back(new Enemigo(10, 10, referenciaHeroe));
+		entidades.push_back(new Enemigo(19, 9, referenciaHeroe));
+		entidades.push_back(new Enemigo(18, 12, referenciaHeroe));
 		
-		// Un enemigo guardia cerca de la salida
+		// El capitán de la guardia bloqueando el paso norte
 		entidades.push_back(new Enemigo(15, 2, referenciaHeroe));
 	}
 };
-
 #endif
