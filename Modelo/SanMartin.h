@@ -20,43 +20,44 @@ public:
 	
 	std::string getTipo() override { return "PROCER"; }
 	
-	void cargarSecuencia(std::vector<sf::Texture>& vector, std::string nombreBase, int cantidad) {
-		for (int i = 1; i <= cantidad; i++) {
-			sf::Texture t;
-			std::string ruta = "sprites/" + nombreBase + "_" + std::to_string(i) + ".png";
-			if (t.loadFromFile(ruta)) {
-				vector.push_back(t);
-			}
-		}
-	}
+	
 	
 	void cargarTextura() override {
-		// 1. FRENTE (1 sola imagen)
+		
+		animDerecha.clear();
+		animIzquierda.clear();
+		animArriba.clear();
+		animAbajo.clear();
+		
+		// ABAJO (frente)
 		sf::Texture tFrente;
-		if(tFrente.loadFromFile("sprites/san_martin_frente.png")) {
+		if (tFrente.loadFromFile("sprites/san_martin_frente.png")) {
 			animAbajo.push_back(tFrente);
 		}
 		
-		// 2. ATRÁS (Mantenemos la secuencia si aún tienes las 4 imágenes de espalda)
-		// Si también dejaste solo 1, puedes cambiar esto para que sea como el de frente.
-		cargarSecuencia(animArriba, "san_martin_atras", 4);
-		
-		// 3. DERECHA (1 sola imagen estática)
-		sf::Texture tDer;
-		// ATENCIÓN: Si renombraste el archivo, quítale el "_1" a la ruta de abajo
-		if(tDer.loadFromFile("sprites/san_martin_derecho_1.png")) {
-			animDerecha.push_back(tDer);
+		// ARRIBA (atrás)
+		sf::Texture tAtras;
+		if (tAtras.loadFromFile("sprites/san_martin_atras.png")) {
+			animArriba.push_back(tAtras);
 		}
 		
-		// 4. IZQUIERDA (1 sola imagen estática)
-		sf::Texture tIzq;
-		// ATENCIÓN: Si renombraste el archivo, quítale el "_1" a la ruta de abajo
-		if(tIzq.loadFromFile("sprites/san_martin_izquierdo_1.png")) {
-			animIzquierda.push_back(tIzq);
+		// DERECHA
+		sf::Texture tDerecha;
+		if (tDerecha.loadFromFile("sprites/san_martin_derecho.png")) {
+			animDerecha.push_back(tDerecha);
 		}
 		
-		// Foto inicial al aparecer en el nivel
-		if (!animAbajo.empty()) sprite.setTexture(animAbajo[0]);
+		// IZQUIERDA
+		sf::Texture tIzquierda;
+		if (tIzquierda.loadFromFile("sprites/san_martin_izquierdo.png")) {
+			animIzquierda.push_back(tIzquierda);
+		}
+		
+		// Textura inicial
+		if (!animAbajo.empty()) {
+			sprite.setTexture(animAbajo[0]);
+			sprite.setOrigin(24.f, 24.f); // si tus sprites son 48x48
+		}
 	}
 	
 	void actualizar() override {
