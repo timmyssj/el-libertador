@@ -294,36 +294,15 @@ void Juego::actualizar() {
 }
 
 void Juego::atacarConSanMartin() {
+	// Si no estamos jugando o no hay nivel, no hacemos nada
 	if (estadoActual != JUGANDO || nivelActual == nullptr) return;
 	
+	// Buscamos a San Martín
 	SanMartin* heroe = nivelActual->getHeroe();
 	if (!heroe) return;
 	
-	const std::vector<Entidad*>& entidades = nivelActual->getEntidades();
-	bool golpeoAlgo = false;
-	
-	for (Entidad* e : entidades) {
-		if (e == heroe) continue;
-		
-		if ((e->getTipo() == "REALISTA" || e->getTipo() == "PRACTICA") && e->estaVivo()) {
-			
-			float dx = e->getX() - heroe->getX();
-			float dy = e->getY() - heroe->getY();
-			float dist = std::sqrt(dx*dx + dy*dy);
-			
-			if (dist <= 2.2f) { 
-				Personaje* p = static_cast<Personaje*>(e);
-				
-				// --- CAMBIO: AHORA QUITA 15 EN VEZ DE 100 ---
-				p->recibirDanio(15.0f); 
-				golpeoAlgo = true;
-			}
-		}
-	}
-	
-	if (golpeoAlgo) {
-		std::cout << "[COMBATE] ¡ZAS! Golpeaste al enemigo." << std::endl;
-	}
+	// ¡Delegamos la acción! Le pasamos la lista de entidades al héroe
+	heroe->atacar(nivelActual->getEntidades());
 }
 
 void Juego::actualizarTextosConfig() {
