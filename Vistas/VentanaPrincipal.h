@@ -329,6 +329,11 @@ private:
 								float posX = (p->getX() * bloqueX) + (bloqueX / 2) - (anchoSprite / 2);
 								float posY = (p->getY() * bloqueY) + bloqueY - altoSprite;
 								
+								// --- NUEVO: APLICAR EL OFFSET VISUAL DEL ATAQUE ---
+								// Multiplicamos por el tamaño del bloque para que sea proporcional
+								posX += (p->getOffsetX() * bloqueX);
+								posY += (p->getOffsetY() * bloqueY);
+								
 								// COMPENSACIÓN (El parche que pusimos antes)
 								if (e->getTipo() == "PROCER") posX += 1.0f; 
 								else posY += 8.0f;  

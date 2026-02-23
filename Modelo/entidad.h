@@ -3,24 +3,26 @@
 
 #include <string>
 
-class Entidad{
-protected:
-	float x, y;
-	bool vivo;
+class Entidad {
+private: // <--- ¡CERO PROTECTED! Ahora es estrictamente privado
+	float x;
+	float y;
 	
 public:
-	Entidad(float startX, float startY) : x(startX), y(startY), vivo(true){}
-	virtual ~Entidad() {} //Destructor virtual
+	Entidad(float x, float y) : x(x), y(y) {}
+	virtual ~Entidad() {}
 	
-	//Metodos virtuales puros
-	virtual void actualizar() = 0;
+	// --- GETTERS ---
+	float getX() const { return x; }
+	float getY() const { return y; }
 	
-	//cada hijo debe decir que es
+	// --- SETTERS ---
+	void setX(float nuevoX) { x = nuevoX; }
+	void setY(float nuevoY) { y = nuevoY; }
+	
 	virtual std::string getTipo() = 0;
-	
-	//Getters
-	float getX() const { return x;}
-	float getY() const { return y;}
-	virtual bool estaVivo() { return vivo; }
+	virtual void actualizar() = 0;
+	virtual bool estaVivo() { return true; } 
 };
-#endif 
+
+#endif
