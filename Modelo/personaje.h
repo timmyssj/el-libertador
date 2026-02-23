@@ -44,8 +44,9 @@ public:
 	
 	virtual ~Personaje() {}
 	
-	// --- GETTERS (Acceso de lectura) ---
 	sf::Sprite& getSprite() { return sprite; }
+	// --- GETTERS (Acceso de lectura) ---
+	sf::Sprite* getSpriteRender() override { return &sprite; }
 	float getVida() const { return vida; }
 	float getVidaMax() const { return vidaMax; }
 	Direccion getDireccion() const { return direccionActual; }

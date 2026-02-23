@@ -2,6 +2,7 @@
 #define NIVEL_ESPANA_H
 
 #include "Nivel.h"
+#include "Obstaculo.h"
 #include <fstream>  // <--- IMPORTANTE: Para leer el archivo binario
 #include <iostream> // <--- IMPORTANTE: Para mostrar mensajes en consola
 
@@ -16,6 +17,10 @@ public:
 		textoIntro.push_back("Mision: Emboscar a la patrulla francesa.");
 		
 		cargarContenido();
+	}
+	
+	std::string getObjetivo() override { 
+		return "OBJETIVO: Elimina a los realistas y ve a la salida"; 
 	}
 	
 	void cargarContenido() override {
@@ -45,6 +50,18 @@ public:
 		// --------------------------------------------
 		
 		// --- 2. POSICIONES EN EL NUEVO CAMPO DE BATALLA ---
+		
+		// --- NUEVO: ESCANEAR EL MAPA PARA SEMBRAR OBJETOS 3D ---
+		for (int y = 0; y < 20; y++) {
+			for (int x = 0; x < 30; x++) {
+				if (mapa[y][x] == 2) {
+					entidades.push_back(new Obstaculo(x, y, "ARBOL"));
+				} 
+				else if (mapa[y][x] == 3) {
+					entidades.push_back(new Obstaculo(x, y, "ROCA"));
+				}
+			}
+		}
 		
 		// San Martín entra por el sur (abajo, en el camino de tierra)
 		referenciaHeroe = new SanMartin(15, 17);

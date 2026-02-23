@@ -43,6 +43,9 @@ public:
 	
 	//detectar entidades
 	bool esCeldaOcupada(int x, int y);
+	
+	// --- NUEVO: MÉTODO POLIMÓRFICO PARA EL TEXTO ---
+	virtual std::string getObjetivo() { return "Objetivo desconocido"; }
 };
 
 #endif

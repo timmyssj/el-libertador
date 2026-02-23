@@ -1,6 +1,7 @@
 #ifndef ENTIDAD_H
 #define ENTIDAD_H
 
+#include <SFML/Graphics.hpp>
 #include <string>
 
 class Entidad {
@@ -23,6 +24,9 @@ public:
 	virtual std::string getTipo() = 0;
 	virtual void actualizar() = 0;
 	virtual bool estaVivo() { return true; } 
+	// --- NUEVO MÉTODO PARA RENDERIZADO GENÉRICO ---
+	// Retorna nullptr por defecto. Si un hijo tiene sprite, debe sobreescribir esto.
+	virtual sf::Sprite* getSpriteRender() { return nullptr; }
 };
 
 #endif

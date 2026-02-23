@@ -34,6 +34,10 @@ public:
 		cargarContenido();
 	}
 	
+	std::string getObjetivo() override { 
+		return "OBJETIVO: Destruye los maniquies (ESPACIO)"; 
+	}
+	
 	void cargarContenido() override {
 		inicializarMapaVacio(); 
 		

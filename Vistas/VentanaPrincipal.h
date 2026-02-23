@@ -198,13 +198,13 @@ private:
 					sf::Color colorTexto;
 					
 					if (modelo->getNivelActual()->hayEnemigosVivos()) {
-						mensaje = "OBJETIVO: Destruye los maniquies (ESPACIO)";
+						mensaje = modelo->getNivelActual()->getObjetivo();
 						colorTexto = sf::Color::White;
 					} else {
-						mensaje = "ï¿½OBJETIVO CUMPLIDO! Ve a la zona Dorada";
+						mensaje = "¡OBJETIVO CUMPLIDO! Ve a la zona Dorada";
 						colorTexto = sf::Color::Green; 
 					}
-					dibujarTexto(mensaje, 400, 565, colorTexto, 18);
+					dibujarTexto(mensaje, 500, 565, colorTexto, 18);
 				}
 			}
 			else if (estado == PAUSA) {
@@ -217,13 +217,13 @@ private:
 				dibujarMenuGenerico(modelo->getMenuPausa(), 550, 300);
 			}
 			else if (estado == CONFIGURACION) {
-				dibujarTexto("CONFIGURACION", 550, 100, sf::Color::Cyan, 30);
+				dibujarTexto("CONFIGURACIÓN", 550, 100, sf::Color::Cyan, 30);
 				dibujarMenuGenerico(modelo->getMenuConfig(), 550, 200);
 				dibujarTexto("Usa IZQ/DER pa   ra cambiar valor", 250, 500, sf::Color::White, 15);
 			}
 			else if (estado == GAME_OVER) {
-				dibujarTexto("ï¿½DERROTA!", 550, 200, sf::Color::Red, 60);
-				dibujarTexto("Presiona ESC para volver al Menï¿½", 550, 400, sf::Color::White, 20);
+				dibujarTexto("¡DERROTA!", 550, 200, sf::Color::Red, 60);
+				dibujarTexto("Presiona ESC para volver al Menú", 550, 400, sf::Color::White, 20);
 			}
 			else if (estado == VICTORIA) {
 				dibujarTexto("ï¿½VICTORIA!", 550, 200, sf::Color::Green, 60);
@@ -291,58 +291,61 @@ private:
 				}
 			}
 			
-			// 3. DIBUJAR PERSONAJES (Tu algoritmo de Profundidad 2.5D se mantiene igual)
+			// 3. DIBUJAR PERSONAJES Y OBJETOS 3D ("FILA POR FILA")
 			if (modelo->getNivelActual()) {
 				const std::vector<Entidad*>& entidades = modelo->getNivelActual()->getEntidades();
 				
+				// --- ¡AQUÍ ESTÁ EL BUCLE QUE NOS FALTABA! ---
 				for (int fila = 0; fila < 20; fila++) {
+					
 					for (Entidad* e : entidades) {
 						if (!e->estaVivo()) continue;
 						
 						if ((int)e->getY() == fila) {
-							Personaje* p = dynamic_cast<Personaje*>(e);
 							
-							if (p) {
-								// SOMBRA
+							sf::Sprite* spritePtr = e->getSpriteRender();
+							
+							if (spritePtr) {
+								// DIBUJAR SOMBRA
 								sf::CircleShape sombra(bloqueX * 0.35f); 
 								sombra.setFillColor(sf::Color(0, 0, 0, 120)); 
 								sombra.setScale(1.0f, 0.4f); 
 								
-								float sombraX = (p->getX() * bloqueX) + (bloqueX / 2) - sombra.getGlobalBounds().width / 2;
-								float sombraY = (p->getY() * bloqueY) + bloqueY - sombra.getGlobalBounds().height;
+								float sombraX = (e->getX() * bloqueX) + (bloqueX / 2) - sombra.getGlobalBounds().width / 2;
+								float sombraY = (e->getY() * bloqueY) + bloqueY - sombra.getGlobalBounds().height;
 								sombra.setPosition(sombraX, sombraY);
 								ventana.draw(sombra);
 								
-								// SPRITE
-								sf::Sprite& sprite = p->getSprite(); 
+								// ESCALAR SPRITE
 								float factorEscala = 1.5f; 
-								
-								if (sprite.getTexture()) {
-									float escalaX = (bloqueX / sprite.getTexture()->getSize().x) * factorEscala;
-									float escalaY = (bloqueY / sprite.getTexture()->getSize().y) * factorEscala;
-									sprite.setScale(escalaX, escalaY);
+								if (spritePtr->getTexture()) {
+									float escalaX = (bloqueX / spritePtr->getTexture()->getSize().x) * factorEscala;
+									float escalaY = (bloqueY / spritePtr->getTexture()->getSize().y) * factorEscala;
+									spritePtr->setScale(escalaX, escalaY);
 								}
 								
-								float anchoSprite = sprite.getGlobalBounds().width;
-								float altoSprite = sprite.getGlobalBounds().height;
+								float anchoSprite = spritePtr->getGlobalBounds().width;
+								float altoSprite = spritePtr->getGlobalBounds().height;
 								
-								float posX = (p->getX() * bloqueX) + (bloqueX / 2) - (anchoSprite / 2);
-								float posY = (p->getY() * bloqueY) + bloqueY - altoSprite;
+								float posX = (e->getX() * bloqueX) + (bloqueX / 2) - (anchoSprite / 2);
+								float posY = (e->getY() * bloqueY) + bloqueY - altoSprite;
 								
-								// --- NUEVO: APLICAR EL OFFSET VISUAL DEL ATAQUE ---
-								// Multiplicamos por el tamaño del bloque para que sea proporcional
-								posX += (p->getOffsetX() * bloqueX);
-								posY += (p->getOffsetY() * bloqueY);
+								// COMPENSACIONES Y ATAQUES
+								Personaje* p = dynamic_cast<Personaje*>(e);
+								if (p) {
+									posX += (p->getOffsetX() * bloqueX);
+									posY += (p->getOffsetY() * bloqueY);
+								}
 								
-								// COMPENSACIÓN (El parche que pusimos antes)
-								if (e->getTipo() == "PROCER") posX += 1.0f; 
-								else posY += 8.0f;  
+								if (e->getTipo() == "PROCER") posY += 0.0f; 
+								else if (e->getTipo() == "REALISTA" || e->getTipo() == "PRACTICA") posY += 3.0f;  
+								else posY += 3.0f; // Árboles y Rocas
 								
-								sprite.setPosition(posX, posY);
-								ventana.draw(sprite);
+								spritePtr->setPosition(posX, posY);
+								ventana.draw(*spritePtr);
 								
-								// BARRAS DE VIDA ENEMIGAS
-								if (e->getTipo() != "PROCER") {
+								// DIBUJAR BARRAS DE VIDA 
+								if (p && e->getTipo() != "PROCER") {
 									float anchoBarra = bloqueX * 0.8f; 
 									float altoBarra = 6.0f;            
 									float porcentajeVida = p->getVida() / p->getVidaMax();
@@ -350,7 +353,7 @@ private:
 									
 									sf::RectangleShape fondoBarra(sf::Vector2f(anchoBarra, altoBarra));
 									fondoBarra.setFillColor(sf::Color::Red);
-									float barraX = (p->getX() * bloqueX) + (bloqueX / 2) - (anchoBarra / 2);
+									float barraX = (e->getX() * bloqueX) + (bloqueX / 2) - (anchoBarra / 2);
 									float barraY = posY - 8.0f; 
 									fondoBarra.setPosition(barraX, barraY);
 									fondoBarra.setOutlineThickness(1);
