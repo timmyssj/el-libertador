@@ -1,10 +1,10 @@
 #include "juego.h"
 #include "NivelTutorial.h"
-#include "enemigo.h"
+#include "Frances.h"
 #include "NivelEspana.h"
 #include <iostream>
 #include <cmath>
-#include <fstream> // Necesario para archivos
+#include <fstream> 
 
 Juego::Juego() {
 	estadoActual = EN_MENU;
@@ -17,7 +17,7 @@ Juego::Juego() {
 	menuPausa = new Menu({"CONTINUAR", "CONFIGURACION", "SALIR AL MENU"});
 	
 	nivelMaximoDesbloqueado = 0; 
-	nivelJugandoId = 0; // Inicializamos el rastreador
+	nivelJugandoId = 0; 
 	
 	menuNiveles = new Menu({"0. TUTORIAL", "1. BATALLA EN ESPANA", "VOLVER"});
 	
@@ -38,10 +38,8 @@ Juego::~Juego() {
 // --- ARCHIVOS BINARIOS ---
 
 void Juego::guardarProgreso() {
-	// Abrimos en modo binario
 	std::ofstream archivo("progreso.dat", std::ios::binary);
 	if (archivo.is_open()) {
-		// Guardamos los bytes crudos de la variable (más seguro y rápido)
 		archivo.write(reinterpret_cast<char*>(&nivelMaximoDesbloqueado), sizeof(nivelMaximoDesbloqueado));
 		archivo.close();
 		std::cout << "[INFO] Partida guardada (Binario): Nivel " << nivelMaximoDesbloqueado << std::endl;
@@ -51,7 +49,6 @@ void Juego::guardarProgreso() {
 }
 
 void Juego::cargarProgreso() {
-	// Leemos en modo binario
 	std::ifstream archivo("progreso.dat", std::ios::binary);
 	if (archivo.is_open()) {
 		archivo.read(reinterpret_cast<char*>(&nivelMaximoDesbloqueado), sizeof(nivelMaximoDesbloqueado));
@@ -71,15 +68,10 @@ void Juego::procesarTeclaArriba() {
 	else if (estadoActual == PAUSA) menuPausa->moverArriba();
 	else if (estadoActual == CONFIGURACION) menuConfig->moverArriba();
 	else if (estadoActual == JUGANDO && nivelActual != nullptr) {
+		if (nivelActual->estaCompletado()) return; 
+		
 		SanMartin* heroe = nivelActual->getHeroe();
-		if (heroe) {
-			int tx = (int)heroe->getX();
-			int ty = (int)heroe->getY() - 1; 
-			
-			if (nivelActual->getContenidoCelda(tx, ty) != PARED && !nivelActual->esCeldaOcupada(tx, ty)) { 
-				heroe->moverse(0, -1);
-			}
-		}
+		if (heroe) heroe->moverse(0, -1);
 	}
 }
 
@@ -89,15 +81,9 @@ void Juego::procesarTeclaAbajo() {
 	else if (estadoActual == PAUSA) menuPausa->moverAbajo();
 	else if (estadoActual == CONFIGURACION) menuConfig->moverAbajo();
 	else if (estadoActual == JUGANDO && nivelActual != nullptr) {
+		if (nivelActual->estaCompletado()) return;
 		SanMartin* heroe = nivelActual->getHeroe();
-		if (heroe) {
-			int tx = (int)heroe->getX();
-			int ty = (int)heroe->getY() + 1; 
-			
-			if (nivelActual->getContenidoCelda(tx, ty) != PARED && !nivelActual->esCeldaOcupada(tx, ty)) { 
-				heroe->moverse(0, 1);
-			}
-		}
+		if (heroe) heroe->moverse(0, 1);
 	}
 }
 
@@ -115,15 +101,9 @@ void Juego::procesarTeclaIzquierda() {
 		actualizarTextosConfig(); 
 	}
 	else if (estadoActual == JUGANDO && nivelActual != nullptr) {
+		if (nivelActual->estaCompletado()) return;
 		SanMartin* heroe = nivelActual->getHeroe();
-		if (heroe) {
-			int tx = (int)heroe->getX() - 1;
-			int ty = (int)heroe->getY(); 
-			
-			if (nivelActual->getContenidoCelda(tx, ty) != PARED && !nivelActual->esCeldaOcupada(tx, ty)) { 
-				heroe->moverse(-1, 0);
-			}
-		}
+		if (heroe) heroe->moverse(-1, 0);
 	}
 }
 
@@ -141,28 +121,22 @@ void Juego::procesarTeclaDerecha() {
 		actualizarTextosConfig();
 	}
 	else if (estadoActual == JUGANDO && nivelActual != nullptr) {
+		if (nivelActual->estaCompletado()) return;
 		SanMartin* heroe = nivelActual->getHeroe();
-		if (heroe) {
-			int tx = (int)heroe->getX() + 1;
-			int ty = (int)heroe->getY();
-			
-			if (nivelActual->getContenidoCelda(tx, ty) != PARED && !nivelActual->esCeldaOcupada(tx, ty)) { 
-				heroe->moverse(1, 0);
-			}
-		}
+		if (heroe) heroe->moverse(1, 0);
 	}
 }
 
 void Juego::procesarTeclaEnter() {
 	if (estadoActual == EN_MENU) {
 		int op = menuPrincipal->getOpcionActual();
-		if (op == 0) { // NUEVA PARTIDA
+		if (op == 0) { 
 			nivelMaximoDesbloqueado = 0; 
 			guardarProgreso(); 
 			estadoActual = SELECCION_NIVEL;
 			menuNiveles->reiniciarCursor();
 		}
-		else if (op == 1) { // CONTINUAR
+		else if (op == 1) { 
 			cargarProgreso(); 
 			estadoActual = SELECCION_NIVEL;
 			menuNiveles->reiniciarCursor();
@@ -178,7 +152,6 @@ void Juego::procesarTeclaEnter() {
 	else if (estadoActual == SELECCION_NIVEL) {
 		int op = menuNiveles->getOpcionActual();
 		
-		// El botón volver ahora es dinámico (la última opción)
 		if (op == menuNiveles->getCantidadOpciones() - 1) {
 			estadoActual = EN_MENU;
 			return;
@@ -190,7 +163,6 @@ void Juego::procesarTeclaEnter() {
 			if (op == 0) nivelActual = new NivelTutorial();
 			else if (op == 1) nivelActual = new NivelEspana(); 
 			
-			// --- NUEVA LÓGICA: Memorizamos qué nivel acabamos de abrir ---
 			nivelJugandoId = op; 
 			
 			prepararNivel(nivelActual);
@@ -225,6 +197,18 @@ void Juego::procesarTeclaEnter() {
 			estadoActual = estadoAnterior; 
 		}
 	}
+	else if (estadoActual == JUGANDO && nivelActual != nullptr) {
+		if (nivelActual->estaCompletado()) {
+			if (nivelJugandoId >= nivelMaximoDesbloqueado) { 
+				nivelMaximoDesbloqueado = nivelJugandoId + 1;
+				guardarProgreso(); 
+			}
+			delete nivelActual; 
+			nivelActual = nullptr;
+			estadoActual = SELECCION_NIVEL; 
+			menuNiveles->reiniciarCursor();
+		}
+	}
 }
 
 void Juego::teclaEscape() {
@@ -249,59 +233,26 @@ void Juego::teclaEscape() {
 
 void Juego::actualizar() {
 	if (estadoActual == JUGANDO && nivelActual != nullptr) {
+		if (nivelActual->estaCompletado()) return; 
 		
 		SanMartin* heroe = nivelActual->getHeroe();
 		if (heroe) heroe->resetearMovimiento();
 		
 		nivelActual->actualizar();
 		
-		if (!heroe->estaVivo()) {
+		if (heroe && !heroe->estaVivo()) {
 			estadoActual = GAME_OVER;
-		}
-		
-		const std::vector<Entidad*>& entidades = nivelActual->getEntidades();
-		for (Entidad* e : entidades) {
-			if (e->getTipo() == "REALISTA" && e->estaVivo()) {
-				float dx = e->getX() - heroe->getX();
-				float dy = e->getY() - heroe->getY();
-				float dist = std::sqrt(dx*dx + dy*dy);
-				
-				if (dist <= 1.5f) { 
-					Enemigo* realista = static_cast<Enemigo*>(e);
-					if (realista->intentarAtacar()) {
-						heroe->recibirDanio(10); 
-					}
-				}
-			}
-		}
-		
-		int x = (int)heroe->getX();
-		int y = (int)heroe->getY();
-		
-		if (nivelActual->getContenidoCelda(x, y) == SALIDA_NIVEL) {
-			if (!nivelActual->hayEnemigosVivos()) {
-				estadoActual = VICTORIA;
-				
-				// --- NUEVA LÓGICA DE AVANCE ---
-				// Si el nivel que ganaste es igual al máximo que tenías, habilitas el siguiente
-				if (nivelJugandoId >= nivelMaximoDesbloqueado) { 
-					nivelMaximoDesbloqueado = nivelJugandoId + 1;
-					guardarProgreso(); 
-				}
-			}
 		}
 	}
 }
 
 void Juego::atacarConSanMartin() {
-	// Si no estamos jugando o no hay nivel, no hacemos nada
 	if (estadoActual != JUGANDO || nivelActual == nullptr) return;
+	if (nivelActual->estaCompletado()) return; 
 	
-	// Buscamos a San Martín
 	SanMartin* heroe = nivelActual->getHeroe();
 	if (!heroe) return;
 	
-	// ¡Delegamos la acción! Le pasamos la lista de entidades al héroe
 	heroe->atacar(nivelActual->getEntidades());
 }
 

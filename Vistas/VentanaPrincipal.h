@@ -4,8 +4,8 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <string>
-#include <algorithm> // Necesario para std::max o std::min
-#include "../Modelo/juego.h" // Cuidado con mayï¿½sculas/minï¿½sculas en el include
+#include <algorithm> 
+#include "../Modelo/juego.h" 
 
 class VentanaPrincipal {
 private:
@@ -22,7 +22,6 @@ private:
 	sf::Texture texturaFondoMenu;
 	sf::Sprite spriteFondoMenu;
 	
-	//camara
 	sf::View camara;
 	
 public:
@@ -30,31 +29,19 @@ public:
 		ventana.create(sf::VideoMode(1100, 600), "San Martin: El Libertador");
 		ventana.setFramerateLimit(60);
 		
-		if (!fuente.loadFromFile("PressStart2P.ttf")) {// Manejo de error si no hay fuente
-			
-		}
-		// REEMPLAZA 'tu_imagen_de_fondo.png' POR EL NOMBRE REAL DE TU ARCHIVO
+		if (!fuente.loadFromFile("PressStart2P.ttf")) { }
+		
 		if (!texturaFondoMenu.loadFromFile("fondos/pantalla1.png")) {
-			std::cout << "Error: No se pudo cargar la imagen de fondo del menú." << std::endl;
-			// Si falla, no pasa nada grave, simplemente se verá negro.
+			std::cout << "Error: No se pudo cargar la imagen de fondo del menu." << std::endl;
 		} else {
-			// Si cargó bien, se la asignamos al sprite
 			spriteFondoMenu.setTexture(texturaFondoMenu);
-			
-			// OPCIONAL: Si tu imagen no es del mismo tamaño que la ventana, 
-			// puedes descomentar estas líneas para que se estire y la cubra toda.
-			
 			float escalaX = (float)ventana.getSize().x / texturaFondoMenu.getSize().x;
 			float escalaY = (float)ventana.getSize().y / texturaFondoMenu.getSize().y;
 			spriteFondoMenu.setScale(escalaX, escalaY);
-			
 		}
 		
-		// Le damos el tamaño de la ventana y hacemos un zoom (0.6 = más cerca)
 		camara.setSize((float)ventana.getSize().x, (float)ventana.getSize().y);
 		camara.zoom(0.6f);
-		// ---------------------------------------------------
-		
 	}
 	
 	void ejecutar() {
@@ -127,9 +114,7 @@ private:
 				dibujarTexto("SELECCIONAR NIVEL", 550, 100, sf::Color::Yellow, 30);
 				
 				Menu* menu = modelo->getMenuNiveles();
-				// --- CORRECCIï¿½N CRï¿½TICA AQUï¿½: getOpciones() ---
 				std::vector<std::string> opciones = menu->getOpciones(); 
-				// ----------------------------------------------
 				
 				int desbloqueados = modelo->getNivelMaximo();
 				
@@ -206,10 +191,30 @@ private:
 					}
 					dibujarTexto(mensaje, 500, 565, colorTexto, 18);
 				}
+				
+				// --- PANTALLA DE VICTORIA (PAUSA CINEMATOGRÁFICA) ---
+				if (modelo->getNivelActual() != nullptr && modelo->getNivelActual()->estaCompletado()) {
+					sf::RectangleShape fondoOscuro(sf::Vector2f(ventana.getSize().x, ventana.getSize().y));
+					fondoOscuro.setFillColor(sf::Color(0, 0, 0, 180)); 
+					ventana.draw(fondoOscuro);
+					
+					sf::Text textoVictoria;
+					textoVictoria.setFont(fuente); 
+					textoVictoria.setString("¡VICTORIA!\nHas asegurado la posicion.\n\nPresiona ENTER para continuar.");
+					textoVictoria.setCharacterSize(30);
+					textoVictoria.setFillColor(sf::Color::Yellow);
+					textoVictoria.setOutlineColor(sf::Color::Black);
+					textoVictoria.setOutlineThickness(2);
+					
+					sf::FloatRect bounds = textoVictoria.getLocalBounds();
+					textoVictoria.setPosition((ventana.getSize().x - bounds.width) / 2.0f, (ventana.getSize().y - bounds.height) / 2.0f);
+					
+					ventana.draw(textoVictoria);
+				}
 			}
 			else if (estado == PAUSA) {
 				dibujarJuego(); 
-				sf::RectangleShape fondoOscuro(sf::Vector2f(1100, 600)); // Ajustado a tamaï¿½o ventana
+				sf::RectangleShape fondoOscuro(sf::Vector2f(1100, 600)); 
 				fondoOscuro.setFillColor(sf::Color(0, 0, 0, 150)); 
 				ventana.draw(fondoOscuro);
 				
@@ -217,18 +222,13 @@ private:
 				dibujarMenuGenerico(modelo->getMenuPausa(), 550, 300);
 			}
 			else if (estado == CONFIGURACION) {
-				dibujarTexto("CONFIGURACIÓN", 550, 100, sf::Color::Cyan, 30);
+				dibujarTexto("CONFIGURACION", 550, 100, sf::Color::Cyan, 30);
 				dibujarMenuGenerico(modelo->getMenuConfig(), 550, 200);
-				dibujarTexto("Usa IZQ/DER pa   ra cambiar valor", 250, 500, sf::Color::White, 15);
+				dibujarTexto("Usa IZQ/DER para cambiar valor", 550, 500, sf::Color::White, 15);
 			}
 			else if (estado == GAME_OVER) {
 				dibujarTexto("¡DERROTA!", 550, 200, sf::Color::Red, 60);
-				dibujarTexto("Presiona ESC para volver al Menú", 550, 400, sf::Color::White, 20);
-			}
-			else if (estado == VICTORIA) {
-				dibujarTexto("ï¿½VICTORIA!", 550, 200, sf::Color::Green, 60);
-				dibujarTexto("Has liberado esta zona.", 550, 300, sf::Color::White, 20);
-				dibujarTexto("Presiona ESC para volver al Menï¿½", 550, 400, sf::Color::White, 20);
+				dibujarTexto("Presiona ESC para volver al Menu", 550, 400, sf::Color::White, 20);
 			}
 			
 			ventana.display(); 
@@ -237,41 +237,32 @@ private:
 		// --- FUNCIONES AYUDANTES ---
 		
 		void dibujarJuego() {
-			// Usamos el tamaño por defecto de la ventana para calcular los bloques
-			// Esto asegura que el mapa mida lo mismo, pero la cámara lo vea de cerca
 			float anchoVentana = (float)ventana.getDefaultView().getSize().x;
 			float altoVentana = (float)ventana.getDefaultView().getSize().y;
 			float bloqueX = anchoVentana / 30.0f; 
 			float bloqueY = altoVentana / 20.0f;  
 			
-			// --- 1. LÓGICA DE LA CÁMARA ---
 			if (modelo->getNivelActual() && modelo->getNivelActual()->getHeroe()) {
 				SanMartin* heroe = modelo->getNivelActual()->getHeroe();
 				
-				// Calculamos el centro exacto de San Martín en píxeles
 				float heroePixelX = (heroe->getX() * bloqueX) + (bloqueX / 2);
 				float heroePixelY = (heroe->getY() * bloqueY) + (bloqueY / 2);
 				
-				// LIMITES DE LA CÁMARA (Para no salirse del mapa)
 				float mitadCamaraX = camara.getSize().x / 2.0f;
 				float mitadCamaraY = camara.getSize().y / 2.0f;
 				
 				float limiteDerecho = (30 * bloqueX) - mitadCamaraX;
 				float limiteInferior = (20 * bloqueY) - mitadCamaraY;
 				
-				// Chocamos la cámara contra los bordes si intenta salir
 				if (heroePixelX < mitadCamaraX) heroePixelX = mitadCamaraX;
 				if (heroePixelX > limiteDerecho) heroePixelX = limiteDerecho;
 				if (heroePixelY < mitadCamaraY) heroePixelY = mitadCamaraY;
 				if (heroePixelY > limiteInferior) heroePixelY = limiteInferior;
 				
-				// Centramos la cámara y se la aplicamos a la ventana
 				camara.setCenter(heroePixelX, heroePixelY);
 				ventana.setView(camara);
 			}
-			// ------------------------------
 			
-			// 2. DIBUJAR MAPA
 			for (int i = 0; i < 20; i++) {       
 				for (int j = 0; j < 30; j++) {   
 					sf::RectangleShape celda(sf::Vector2f(bloqueX, bloqueY));
@@ -291,22 +282,17 @@ private:
 				}
 			}
 			
-			// 3. DIBUJAR PERSONAJES Y OBJETOS 3D ("FILA POR FILA")
 			if (modelo->getNivelActual()) {
 				const std::vector<Entidad*>& entidades = modelo->getNivelActual()->getEntidades();
 				
-				// --- ¡AQUÍ ESTÁ EL BUCLE QUE NOS FALTABA! ---
 				for (int fila = 0; fila < 20; fila++) {
-					
 					for (Entidad* e : entidades) {
 						if (!e->estaVivo()) continue;
 						
 						if ((int)e->getY() == fila) {
-							
 							sf::Sprite* spritePtr = e->getSpriteRender();
 							
 							if (spritePtr) {
-								// DIBUJAR SOMBRA
 								sf::CircleShape sombra(bloqueX * 0.35f); 
 								sombra.setFillColor(sf::Color(0, 0, 0, 120)); 
 								sombra.setScale(1.0f, 0.4f); 
@@ -316,7 +302,6 @@ private:
 								sombra.setPosition(sombraX, sombraY);
 								ventana.draw(sombra);
 								
-								// ESCALAR SPRITE
 								float factorEscala = 1.5f; 
 								if (spritePtr->getTexture()) {
 									float escalaX = (bloqueX / spritePtr->getTexture()->getSize().x) * factorEscala;
@@ -330,7 +315,6 @@ private:
 								float posX = (e->getX() * bloqueX) + (bloqueX / 2) - (anchoSprite / 2);
 								float posY = (e->getY() * bloqueY) + bloqueY - altoSprite;
 								
-								// COMPENSACIONES Y ATAQUES
 								Personaje* p = dynamic_cast<Personaje*>(e);
 								if (p) {
 									posX += (p->getOffsetX() * bloqueX);
@@ -339,12 +323,11 @@ private:
 								
 								if (e->getTipo() == "PROCER") posY += 0.0f; 
 								else if (e->getTipo() == "REALISTA" || e->getTipo() == "PRACTICA") posY += 3.0f;  
-								else posY += 3.0f; // Árboles y Rocas
+								else posY += 3.0f; 
 								
 								spritePtr->setPosition(posX, posY);
 								ventana.draw(*spritePtr);
 								
-								// DIBUJAR BARRAS DE VIDA 
 								if (p && e->getTipo() != "PROCER") {
 									float anchoBarra = bloqueX * 0.8f; 
 									float altoBarra = 6.0f;            
@@ -372,11 +355,7 @@ private:
 				}
 			}
 			
-			// --- 4. MUY IMPORTANTE: RESETEAR LA VISTA PARA LA UI ---
-			// Al terminar de dibujar el mundo 2D, regresamos a la vista normal
-			// para que textos como "OBJETIVO: ..." no queden gigantes ni se muevan.
 			ventana.setView(ventana.getDefaultView());
-			// -------------------------------------------------------
 		}
 		
 		void dibujarTexto(std::string mensaje, float x, float y, sf::Color color, int tam) {

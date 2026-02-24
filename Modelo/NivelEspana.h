@@ -3,19 +3,19 @@
 
 #include "Nivel.h"
 #include "Obstaculo.h"
-#include <fstream>  // <--- IMPORTANTE: Para leer el archivo binario
-#include <iostream> // <--- IMPORTANTE: Para mostrar mensajes en consola
+#include "Frances.h"
+#include "Aliado.h"
+#include <fstream>  
+#include <iostream> 
 
 class NivelEspana : public Nivel {
 public:
 	NivelEspana() {
-		tituloIntro = "NIVEL 1: BATALLA EN ESPANA";
-		
-		textoIntro.push_back("Ano 1808. Arjonilla, Espana.");
-		textoIntro.push_back("Las tropas de Napoleon invaden la peninsula.");
-		textoIntro.push_back("El joven Capitan San Martin lucha junto\nal ejercito espanol.");
-		textoIntro.push_back("Mision: Emboscar a la patrulla francesa.");
-		
+		setTituloIntro("NIVEL 1: BATALLA EN ESPANA");
+		addTextoIntro("Ano 1808. Arjonilla, Espana.");
+		addTextoIntro("Las tropas de Napoleon invaden la peninsula.");
+		addTextoIntro("El joven Capitan San Martin lucha junto\nal ejercito espanol.");
+		addTextoIntro("Mision: Emboscar a la patrulla francesa.");
 		cargarContenido();
 	}
 	
@@ -24,56 +24,80 @@ public:
 	}
 	
 	void cargarContenido() override {
-		// --- 1. LECTURA DEL MAPA BINARIO BLINDADO ---
 		std::ifstream archivoEntrada("nivel1.dat", std::ios::binary);
 		
 		if (archivoEntrada.is_open()) {
-			// Si el archivo existe, leemos la matriz 'mapa' completa de un solo golpe
-			archivoEntrada.read(reinterpret_cast<char*>(mapa), sizeof(mapa));
+			// Usamos el Getter de Puntero para la lectura cruda
+			archivoEntrada.read(reinterpret_cast<char*>(getMapaPointer()), getMapaSize());
 			archivoEntrada.close();
 			std::cout << "[NIVEL] Mapa Espana cargado desde nivel1.dat" << std::endl;
-		} 
-		else {
+		} else {
 			std::cerr << "[ERROR] No se encontro nivel1.dat. Cargando mapa por defecto." << std::endl;
-			
-			// PLAN B: Si no generaste el archivo aún o se borró, usamos tu código original
 			inicializarMapaVacio();
-			
+			// Llenamos el mapa usando setCelda(columna, fila, valor)
 			for(int y = 0; y < 20; y++) {
-				if (y % 3 == 0) { mapa[y][2] = PARED; mapa[y][27] = PARED; }
-				if (y % 4 == 0) { mapa[y][5] = PARED; mapa[y][24] = PARED; }
+				if (y % 3 == 0) { setCelda(2, y, PARED); setCelda(27, y, PARED); }
+				if (y % 4 == 0) { setCelda(5, y, PARED); setCelda(24, y, PARED); }
 			}
-			mapa[10][14] = PARED; mapa[10][15] = PARED;
-			mapa[11][14] = PARED; mapa[11][15] = PARED;
-			mapa[0][15] = SALIDA_NIVEL;
+			setCelda(14, 10, PARED); setCelda(15, 10, PARED);
+			setCelda(14, 11, PARED); setCelda(15, 11, PARED);
+			setCelda(15, 0, SALIDA_NIVEL);
 		}
-		// --------------------------------------------
 		
-		// --- 2. POSICIONES EN EL NUEVO CAMPO DE BATALLA ---
-		
-		// --- NUEVO: ESCANEAR EL MAPA PARA SEMBRAR OBJETOS 3D ---
 		for (int y = 0; y < 20; y++) {
 			for (int x = 0; x < 30; x++) {
-				if (mapa[y][x] == 2) {
-					entidades.push_back(new Obstaculo(x, y, "ARBOL"));
-				} 
-				else if (mapa[y][x] == 3) {
-					entidades.push_back(new Obstaculo(x, y, "ROCA"));
+				// Leemos con getContenidoCelda
+				if (getContenidoCelda(x, y) == 2) agregarEntidad(new Obstaculo(x, y, "ARBOL"));
+				else if (getContenidoCelda(x, y) == 3) agregarEntidad(new Obstaculo(x, y, "ROCA"));
+			}
+		}
+		
+		setHeroe(new SanMartin(10, 17, 1)); 
+		agregarEntidad(getHeroe()); 
+		
+		agregarEntidad(new Aliado(11, 17, getHeroe()));
+		agregarEntidad(new Aliado(12, 19, getHeroe()));
+		agregarEntidad(new Aliado(13, 17, getHeroe()));
+		agregarEntidad(new Aliado(14, 19, getHeroe()));
+		agregarEntidad(new Aliado(16, 19, getHeroe()));
+		agregarEntidad(new Aliado(17, 17, getHeroe()));
+		agregarEntidad(new Aliado(18, 19, getHeroe()));
+		agregarEntidad(new Aliado(19, 17, getHeroe()));
+		
+		agregarEntidad(new Frances(11, 6, getHeroe()));
+		agregarEntidad(new Frances(13, 5, getHeroe()));
+		agregarEntidad(new Frances(15, 6, getHeroe()));
+		agregarEntidad(new Frances(15, 2, getHeroe()));
+		agregarEntidad(new Frances(17, 5, getHeroe()));
+		agregarEntidad(new Frances(19, 6, getHeroe()));
+		
+		for (Entidad* e : getEntidades()) {
+			Personaje* p = dynamic_cast<Personaje*>(e);
+			if (p) p->setMapaEntidades(&getEntidades());
+		}
+	}
+	
+	void actualizar() override {
+		for (Entidad* e : getEntidades()) {
+			if (e->estaVivo()) e->actualizar();
+		}
+		
+		if (getHeroe() && getHeroe()->estaVivo()) {
+			int x = (int)getHeroe()->getX();
+			int y = (int)getHeroe()->getY();
+			
+			if (x >= 0 && x < 30 && y >= 0 && y < 20) {
+				if (getContenidoCelda(x, y) == SALIDA_NIVEL) {
+					
+					// --- NUEVO: Solo ganas si el mapa está limpio ---
+					if (!hayEnemigosVivos()) {
+						setCompletado(true);
+					}
+					
 				}
 			}
 		}
-		
-		// San Martín entra por el sur (abajo, en el camino de tierra)
-		referenciaHeroe = new SanMartin(15, 17);
-		entidades.push_back(referenciaHeroe);
-		
-		// Enemigos (Patrulla Francesa emboscada en el claro central)
-		entidades.push_back(new Enemigo(10, 10, referenciaHeroe));
-		entidades.push_back(new Enemigo(19, 9, referenciaHeroe));
-		entidades.push_back(new Enemigo(18, 12, referenciaHeroe));
-		
-		// El capitán de la guardia bloqueando el paso norte
-		entidades.push_back(new Enemigo(15, 2, referenciaHeroe));
 	}
 };
+
 #endif

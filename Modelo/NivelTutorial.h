@@ -6,31 +6,19 @@
 
 class NivelTutorial : public Nivel {
 public:
-	// Al crear el tutorial, cargamos su contenido automáticamente
 	NivelTutorial() {
-		textoIntro.push_back("25 de Febrero de 1778");
-		textoIntro.push_back("José Francisco de San Martín nace en Yapeyú,\n\n"
-		"una antigua misión jesuítica a orillas del río Uruguay,\n\n"
-		"en la actual provincia de Corrientes.");
-		textoIntro.push_back("Traslado a España, 1783-1785");
-		textoIntro.push_back("Allí, el joven José comenzó sus estudios primarios \n\n"
-		"en la Escuela de Temporalidades de Málaga,\n\n" 
-		"donde recibió una educación básica en letras,\n\nmatemáticas y rudimentos de humanidades.");
-		textoIntro.push_back("Ingreso a la Escuela Militar: El Cadete de Murcia");
-		textoIntro.push_back("Apodado 'El Leal', San Martín forjó un carácter metódico \n\ny disciplinado.");
-		textoIntro.push_back("Durante estos años:\n");
-		textoIntro.push_back("Estudió táctica militar, matemáticas aplicadas a balística\n\ny geografía.");
-		textoIntro.push_back("Aprendió francés,\n\nlo que le permitió acceder a la literatura de la Ilustración\n\n"
-		"y a los manuales militares de Napoleón más adelante.\n\n");
-		textoIntro.push_back("Ascendió rápidamente gracias a su valor en combate;\n\n"
-		"a los 15 años ya era Segundo Subteniente.");
-		tituloIntro = "TUTORIAL";
-		textoIntro.push_back(
-		"w -> arriba\n\n"
-		"a -> izquierda\n\n"
-		"s -> abajo\n\n"
-		"d -> derecha\n\n"
-		"espacio -> atacar");
+		addTextoIntro("25 de Febrero de 1778");
+		addTextoIntro("Jose Francisco de San Martin nace en Yapeyu,\n\nuna antigua mision jesuitica a orillas del rio Uruguay,\n\nen la actual provincia de Corrientes.");
+		addTextoIntro("Traslado a Espana, 1783-1785");
+		addTextoIntro("Alli, el joven Jose comenzo sus estudios primarios \n\nen la Escuela de Temporalidades de Malaga,\n\ndonde recibio una educacion basica en letras,\n\nmatematicas y rudimentos de humanidades.");
+		addTextoIntro("Ingreso a la Escuela Militar: El Cadete de Murcia");
+		addTextoIntro("Apodado 'El Leal', San Martin forjo un caracter metodico \n\ny disciplinado.");
+		addTextoIntro("Durante estos anos:\n");
+		addTextoIntro("Estudio tactica militar, matematicas aplicadas a balistica\n\ny geografia.");
+		addTextoIntro("Aprendio frances,\n\nlo que le permitio acceder a la literatura de la Ilustracion\n\ny a los manuales militares de Napoleon mas adelante.\n\n");
+		addTextoIntro("Ascendio rapidamente gracias a su valor en combate;\n\na los 15 anos ya era Segundo Subteniente.");
+		setTituloIntro("TUTORIAL");
+		addTextoIntro("w -> arriba\n\na -> izquierda\n\ns -> abajo\n\nd -> derecha\n\nespacio -> atacar");
 		cargarContenido();
 	}
 	
@@ -41,28 +29,42 @@ public:
 	void cargarContenido() override {
 		inicializarMapaVacio(); 
 		
-		// 1. DISEÑO EN ZIG-ZAG (Serpiente)
-		// Paredes horizontales largas para obligar a recorrer todo
 		for(int x = 5; x < 25; x++) { 
-			mapa[6][x] = PARED;   // Muro superior
-			mapa[14][x] = PARED;  // Muro inferior
+			setCelda(x, 6, PARED);   
+			setCelda(x, 14, PARED);  
+		}
+		for(int y = 6; y < 15; y++) { setCelda(25, y, PARED); } 
+		setCelda(5, 14, PARED); 
+		
+		setCelda(28, 18, SALIDA_NIVEL);
+		
+		setHeroe(new SanMartin(2, 2, 0)); 
+		agregarEntidad(getHeroe());
+		
+		agregarEntidad(new Munieco(10, 3));  
+		agregarEntidad(new Munieco(20, 10)); 
+		agregarEntidad(new Munieco(10, 17)); 
+		
+		for (Entidad* e : getEntidades()) {
+			Personaje* p = dynamic_cast<Personaje*>(e);
+			if (p) p->setMapaEntidades(&getEntidades());
+		}
+	}
+	
+	void actualizar() override {
+		for (Entidad* e : getEntidades()) {
+			if (e->estaVivo()) e->actualizar();
 		}
 		
-		// Paredes verticales para cerrar los pasillos y forzar la vuelta
-		for(int y = 6; y < 15; y++) { mapa[y][25] = PARED; } // Cierre derecho
-		mapa[14][5] = PARED; // Un bloque para forzar la entrada
-		
-		// 2. LA SALIDA (Abajo a la derecha)
-		mapa[18][28] = SALIDA_NIVEL;
-		
-		// 3. EL HÉROE (Arriba a la izquierda)
-		referenciaHeroe = new SanMartin(2, 2); 
-		entidades.push_back(referenciaHeroe);
-		
-		// 4. MUÑECOS (Estratégicamente ubicados en el camino)
-		entidades.push_back(new Munieco(10, 3));  // En el primer pasillo
-		entidades.push_back(new Munieco(20, 10)); // En el centro (curva)
-		entidades.push_back(new Munieco(10, 17)); // En el pasillo final
+		if (getHeroe() && getHeroe()->estaVivo()) {
+			int x = (int)getHeroe()->getX();
+			int y = (int)getHeroe()->getY();
+			if (x >= 0 && x < 30 && y >= 0 && y < 20) {
+				if (getContenidoCelda(x, y) == SALIDA_NIVEL) {
+					setCompletado(true);
+				}
+			}
+		}
 	}
 };
 
