@@ -2,55 +2,49 @@
 #define FRANCES_H
 
 #include "Personaje.h"
-#include "SanMartin.h" 
+#include "SanMartin.h"
 #include <cmath>
 #include <vector>
 
 class Frances : public Personaje {
 private:
-	SanMartin* objetivo;
-	std::vector<sf::Texture> animDerecha;
-	std::vector<sf::Texture> animIzquierda;
-	std::vector<sf::Texture> animArriba;
-	std::vector<sf::Texture> animAbajo;
+	SanMartin* heroe; 
+	std::vector<sf::Texture> animDerecha, animIzquierda, animArriba, animAbajo;
+	// --- NUEVO: Vectores de Ataque ---
+	std::vector<sf::Texture> atkDerecha, atkIzquierda, atkArriba, atkAbajo;
 	int cooldownAtaque;
 	
 public:
-	// Limpiamos el constructor, ya no pide el mapa aquí
-	Frances(float x, float y, SanMartin* heroe) : Personaje(x, y, 50, 9) {
-		objetivo = heroe;
+	Frances(float x, float y, SanMartin* h) : Personaje(x, y, 70, 5) {
+		heroe = h;
 		cooldownAtaque = 0;
-		cargarTextura(); 
+		cargarTextura();
 	}
 	
 	std::string getTipo() override { return "FRANCES"; }
 	
-	void cargarSecuenciaConRespaldo(std::vector<sf::Texture>& vector, std::string ideal, std::string respaldo, int cantidad) {
+	void cargarSecuencia(std::vector<sf::Texture>& vector, std::string nombreBase, int cantidad) {
 		for (int i = 1; i <= cantidad; i++) {
 			sf::Texture t;
-			if (t.loadFromFile("sprites/" + ideal + "_" + std::to_string(i) + ".png")) {
+			if (t.loadFromFile("sprites/" + nombreBase + "_" + std::to_string(i) + ".png")) {
 				vector.push_back(t);
-				getSprite().setColor(sf::Color::White); 
-			} else if (t.loadFromFile("sprites/" + respaldo + "_" + std::to_string(i) + ".png")) {
-				vector.push_back(t);
-				getSprite().setColor(sf::Color(100, 150, 255)); 
 			}
 		}
 	}
 	
 	void cargarTextura() override {
-		cargarSecuenciaConRespaldo(animDerecha, "frances_derecho", "realista_derecho", 4);
-		cargarSecuenciaConRespaldo(animIzquierda, "frances_izquierdo", "realista_izquierdo", 4);
-		cargarSecuenciaConRespaldo(animArriba, "frances_atras", "realista_atras", 4);
+		// Caminata
+		cargarSecuencia(animDerecha, "frances_derecho", 1);
+		cargarSecuencia(animIzquierda, "frances_izquierdo", 1);
+		cargarSecuencia(animArriba, "frances_atras", 1);
+		cargarSecuencia(animAbajo, "frances_frente", 1);
 		
-		sf::Texture tFrente;
-		if(tFrente.loadFromFile("sprites/frances_frente_1.png")) { 
-			animAbajo.push_back(tFrente);
-			getSprite().setColor(sf::Color::White);
-		} else if(tFrente.loadFromFile("sprites/realista_frente.png")) {
-			animAbajo.push_back(tFrente);
-			getSprite().setColor(sf::Color(100, 150, 255)); 
-		}
+		// Ataques
+		cargarSecuencia(atkDerecha, "frances_ataque_derecho", 1);
+		cargarSecuencia(atkIzquierda, "frances_ataque_izquierdo", 1);
+		cargarSecuencia(atkArriba, "frances_ataque_atras", 1);
+		cargarSecuencia(atkAbajo, "frances_ataque_frente", 1);
+		
 		if (!animAbajo.empty()) getSprite().setTexture(animAbajo[0], true);
 	}
 	
@@ -58,53 +52,66 @@ public:
 		if (cooldownAtaque > 0) cooldownAtaque--;
 		bool atacando = false;
 		
-		// --- AHORA USAMOS getMapaEntidades() ---
-		if (getMapaEntidades() != nullptr && cooldownAtaque == 0) {
+		Entidad* objetivoMasCercano = nullptr;
+		float distMinima = 9999.0f;
+		
+		if (getMapaEntidades() != nullptr) {
 			for (Entidad* e : *getMapaEntidades()) {
-				if ((e->getTipo() == "PROCER" || e->getTipo() == "REALISTA_ALIADO") && e->estaVivo()) {
-					float dist = std::sqrt(std::pow(e->getX() - getX(), 2) + std::pow(e->getY() - getY(), 2));
-					if (dist <= 1.5f) {
-						Personaje* enemigo = static_cast<Personaje*>(e);
-						enemigo->recibirDanio(10.0f); 
-						cooldownAtaque = 60; 
-						setTimerAtaque(12);  
-						atacando = true;
-						break;
-					}
+				if ((e->getTipo() == "PROCER" || e->getTipo() == "ALIADO") && e->estaVivo()) {
+					float dx = e->getX() - getX();
+					float dy = e->getY() - getY();
+					float dist = std::sqrt(dx*dx + dy*dy);
+					if (dist < distMinima) { distMinima = dist; objetivoMasCercano = e; }
 				}
 			}
 		}
 		
-		if (!atacando && objetivo && objetivo->estaVivo()) {
-			float dx = objetivo->getX() - this->getX();
-			float dy = objetivo->getY() - this->getY();
-			float dist = std::sqrt(dx*dx + dy*dy);
+		if (objetivoMasCercano && distMinima <= 1.5f && cooldownAtaque == 0) {
+			Personaje* victima = static_cast<Personaje*>(objetivoMasCercano);
+			victima->recibirDanio(10.0f); 
+			cooldownAtaque = 80; 
+			setTimerAtaque(20); // Animación extendida
+			atacando = true;
 			
-			if (dist < 15.0f && dist > 1.2f) { 
+			float dx = objetivoMasCercano->getX() - getX();
+			float dy = objetivoMasCercano->getY() - getY();
+			if (std::abs(dx) > std::abs(dy)) setDireccion(dx > 0 ? DERECHA : IZQUIERDA);
+			else setDireccion(dy > 0 ? ABAJO : ARRIBA);
+		}
+		
+		if (!atacando && objetivoMasCercano) {
+			if (distMinima <= 8.0f && distMinima > 1.2f) { 
+				float dx = objetivoMasCercano->getX() - getX();
+				float dy = objetivoMasCercano->getY() - getY();
 				float movX = 0, movY = 0;
+				
 				if (std::abs(dx) > std::abs(dy)) movX = (dx > 0) ? 1 : -1;
 				else movY = (dy > 0) ? 1 : -1;
 				
+				float oldX = getX(); float oldY = getY();
 				moverse(movX, movY);
 				
-				// --- AHORA USAMOS getCooldownMovimiento() ---
-				if (getCooldownMovimiento() == 0) {
-					if (movX != 0) moverse(0, (dy > 0) ? 1 : -1);
-					else moverse((dx > 0) ? 1 : -1, 0);
+				if (std::abs(getX() - oldX) < 0.01f && std::abs(getY() - oldY) < 0.01f && getCooldownMovimiento() == 0) {
+					if (movX != 0) moverse(0, (dy > 0) ? 1 : -1); 
+					else moverse((dx > 0) ? 1 : -1, 0); 
 				}
 			} else {
-				resetearMovimiento(); 
+				resetearMovimiento();
 			}
+		} else {
+			resetearMovimiento();
 		}
 		
+		// --- ANIMACIONES ---
 		if (getTimerAtaque() > 0) {
 			setTimerAtaque(getTimerAtaque() - 1);
-			float desplazamiento = (getTimerAtaque() > 6) ? 0.4f : 0.0f; 
+			setOffsetX(0); 
+			setOffsetY(0); 
 			switch (getDireccion()) {
-			case DERECHA: setOffsetX(desplazamiento); setOffsetY(0); break;
-			case IZQUIERDA: setOffsetX(-desplazamiento); setOffsetY(0); break;
-			case ABAJO: setOffsetX(0); setOffsetY(desplazamiento); break;
-			case ARRIBA: setOffsetX(0); setOffsetY(-desplazamiento); break;
+			case DERECHA: reproducirAnimacion(atkDerecha.empty() ? animDerecha : atkDerecha); break;
+			case IZQUIERDA: reproducirAnimacion(atkIzquierda.empty() ? animIzquierda : atkIzquierda); break;
+			case ABAJO: reproducirAnimacion(atkAbajo.empty() ? animAbajo : atkAbajo); break;
+			case ARRIBA: reproducirAnimacion(atkArriba.empty() ? animArriba : atkArriba); break;
 			}
 		} else {
 			setOffsetX(0); setOffsetY(0);

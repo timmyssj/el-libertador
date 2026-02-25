@@ -19,7 +19,6 @@ private:
 	SanMartin* referenciaHeroe;
 	bool completado; 
 	
-	// --- NUEVO: RUTA DEL FONDO ---
 	std::string archivoFondo;
 	
 public:
@@ -46,7 +45,6 @@ public:
 	void addTextoIntro(const std::string& t) { textoIntro.push_back(t); }
 	std::vector<std::string> getTextoIntro() const { return textoIntro; }
 	
-	// --- NUEVOS SETTERS Y GETTERS PARA EL FONDO ---
 	void setArchivoFondo(const std::string& arch) { archivoFondo = arch; }
 	std::string getArchivoFondo() const { return archivoFondo; }
 	
@@ -55,6 +53,27 @@ public:
 	
 	bool estaCompletado() const { return completado; }
 	void setCompletado(bool c) { completado = c; }
+	
+	// --- NUEVO: Verifica si la celda es caminable para el Héroe ---
+	// ¡Ahora sí está en el Nivel, donde puede ver el mapa y las entidades!
+	bool esCeldaLibreParaHeroe(int x, int y) {
+		int celda = getContenidoCelda(x, y);
+		
+		// 1. Si hay un muro, árbol o roca, no puede pasar
+		if (celda == 1 || celda == 2 || celda == 3) return false; 
+		
+		// 2. Si hay un enemigo, bloquea el paso (Los enemigos son sólidos)
+		for (Entidad* e : entidades) {
+			if (e->estaVivo() && (int)e->getX() == x && (int)e->getY() == y) {
+				if (e->getTipo() == "FRANCES" || e->getTipo() == "REALISTA") {
+					return false; 
+				}
+			}
+		}
+		
+		// 3. Si está vacía o hay un Aliado/Granadero, ¡vía libre!
+		return true; 
+	}
 };
 
 #endif

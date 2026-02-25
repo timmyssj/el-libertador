@@ -59,14 +59,22 @@ public:
 		setHeroe(new SanMartin(10, 17, 1)); 
 		agregarEntidad(getHeroe()); 
 		
-		agregarEntidad(new Aliado(11, 17, getHeroe()));
-		agregarEntidad(new Aliado(12, 19, getHeroe()));
-		agregarEntidad(new Aliado(13, 17, getHeroe()));
-		agregarEntidad(new Aliado(14, 19, getHeroe()));
-		agregarEntidad(new Aliado(16, 19, getHeroe()));
-		agregarEntidad(new Aliado(17, 17, getHeroe()));
-		agregarEntidad(new Aliado(18, 19, getHeroe()));
-		agregarEntidad(new Aliado(19, 17, getHeroe()));
+		// --- 2. Nacen los Aliados en Formación de Cuadro ---
+		// Constructor: (x_inicial, y_inicial, heroe, flancoX, flancoY)
+		
+		// --- 2. Nacen los Aliados en Formación de "U" (Vanguardia Libre) ---
+		// Flancos (A los lados, un poco separados)
+		agregarEntidad(new Aliado(10, 16, getHeroe(), -2, 0));   
+		agregarEntidad(new Aliado(16, 16, getHeroe(),  2, 0));   
+		
+		// Media retaguardia (A los lados, un paso atrás)
+		agregarEntidad(new Aliado(11, 17, getHeroe(), -1, 1));  
+		agregarEntidad(new Aliado(15, 17, getHeroe(),  1, 1));   
+		
+		// Retaguardia pesada (Cubriendo la espalda)
+		agregarEntidad(new Aliado(11, 19, getHeroe(), -2, 2));  
+		agregarEntidad(new Aliado(13, 19, getHeroe(),  0, 2));   
+		agregarEntidad(new Aliado(15, 19, getHeroe(),  2, 2));
 		
 		agregarEntidad(new Frances(11, 6, getHeroe()));
 		agregarEntidad(new Frances(13, 5, getHeroe()));

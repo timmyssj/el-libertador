@@ -15,14 +15,20 @@ public:
 	Obstaculo(float x, float y, std::string tipo) : Entidad(x, y), tipoObjeto(tipo) {
 		// Carga la textura según el tipo
 		if (tipo == "ARBOL") {
-			textura.loadFromFile("sprites/arbol.png"); // Reemplaza por tu archivo real
+			textura.loadFromFile("sprites/arbol.png"); 
 		} else if (tipo == "ROCA") {
-			textura.loadFromFile("sprites/roca.png");  // Reemplaza por tu archivo real
+			textura.loadFromFile("sprites/roca.png");  
+		} else if (tipo == "CONVENTO") {
+			textura.loadFromFile("sprites/convento.png");  
+			// --- NUEVO: EL PILAR PARA INTERIORES ---
+		} else if (tipo == "PILAR") {
+			textura.loadFromFile("sprites/pilar.png");
 		}
 		
 		sprite.setTexture(textura, true);
 	}
 	
+	// OJO: Devuelve "OBSTACULO_CONVENTO"
 	std::string getTipo() override { return "OBSTACULO_" + tipoObjeto; }
 	
 	// Un obstáculo no hace nada, es estático
