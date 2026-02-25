@@ -236,7 +236,7 @@ private:
 					for (Entidad* e : entidades) {
 						if (!e->estaVivo()) continue;
 						if ((int)e->getY() == fila) {
-							if (e->getTipo() == "ARBOL" || e->getTipo() == "ROCA") {
+							if (e->getTipo() == "ARBOL" || e->getTipo() == "ROCA" || e->getTipo() == "OBSTACULO_CONVENTO") {
 								dibujarEntidadUnica(e, bloqueX, bloqueY);
 							}
 						}
@@ -246,8 +246,7 @@ private:
 			
 			ventana.setView(ventana.getDefaultView());
 		}
-		
-		// --- NUEVA FUNCIÓN PRIVADA PARA DIBUJAR UNA SOLA ENTIDAD ---
+			
 		// --- NUEVA FUNCIÓN PRIVADA PARA DIBUJAR UNA SOLA ENTIDAD ---
 		void dibujarEntidadUnica(Entidad* e, float bloqueX, float bloqueY) {
 			sf::Sprite* spritePtr = e->getSpriteRender();
@@ -263,11 +262,15 @@ private:
 			
 			// --- CORRECCIÓN INFALIBLE: ESCALA DINÁMICA ---
 			Personaje* p = dynamic_cast<Personaje*>(e);
-			float factorEscala = 1.5f; // Escala normal para San Martín y soldados
+			float factorEscala = 1.5f; 
 			
 			if (p == nullptr) {
-				// Si NO es un personaje, es decoración del mapa (Árbol o Roca)
-				factorEscala = 2.3f; // ¡Hacemos el bosque gigante y frondoso!
+				factorEscala = 2.3f; // Árboles y rocas
+				
+				// --- NUEVO: Detectar el nombre correcto para hacerlo GIGANTE ---
+				if (e->getTipo() == "OBSTACULO_CONVENTO") {
+					factorEscala = 20.0f; // Escala del edificio (ajusta a gusto)
+				}
 			}
 			
 			if (spritePtr->getTexture()) {
@@ -279,20 +282,21 @@ private:
 			float anchoSprite = spritePtr->getGlobalBounds().width;
 			float altoSprite = spritePtr->getGlobalBounds().height;
 			
-			// Anclamos la imagen al fondo de la casilla
 			float posX = (e->getX() * bloqueX) + (bloqueX / 2) - (anchoSprite / 2);
 			float posY = (e->getY() * bloqueY) + bloqueY - altoSprite;
 			
 			if (p) {
-				// Ajustes finos solo para personajes
 				posX += (p->getOffsetX() * bloqueX);
 				posY += (p->getOffsetY() * bloqueY);
-				
 				if (e->getTipo() == "PROCER") posY += 0.0f; 
 				else posY += 3.0f; 
 			} else {
-				// Ajustes finos para árboles y rocas grandes
-				posY += 10.0f; // Hundimos un poco el tronco gigante para que toque bien el suelo
+				posY += 10.0f; // Hunde un poco los árboles
+				
+				// --- CORRECCIÓN: El convento no se hunde, queda a ras del suelo ---
+				if (e->getTipo() == "OBSTACULO_CONVENTO") {
+					posY += 20.0f; 
+				}
 			}
 			
 			spritePtr->setPosition(posX, posY);

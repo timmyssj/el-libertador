@@ -9,6 +9,8 @@
 class Aliado : public Personaje {
 private:
 	SanMartin* lider;
+	int fX; // Distancia horizontal a mantener respecto al líder
+	int fY; // Distancia vertical a mantener respecto al líder
 	std::vector<sf::Texture> animDerecha;
 	std::vector<sf::Texture> animIzquierda;
 	std::vector<sf::Texture> animArriba;
@@ -16,13 +18,16 @@ private:
 	int cooldownAtaque;
 	
 public:
-	Aliado(float x, float y, SanMartin* heroe) : Personaje(x, y, 100, 7) { 
+	// Velocidad 4 para marchar en bloque
+	Aliado(float x, float y, SanMartin* heroe, int flancoX, int flancoY) : Personaje(x, y, 100, 4) { 
 		lider = heroe;
+		fX = flancoX;
+		fY = flancoY;
 		cooldownAtaque = 0;
 		cargarTextura();
 	}
 	
-	std::string getTipo() override { return "REALISTA_ALIADO"; }
+	std::string getTipo() override { return "ALIADO"; }
 	
 	void cargarSecuencia(std::vector<sf::Texture>& vector, std::string nombreBase, int cantidad) {
 		for (int i = 1; i <= cantidad; i++) {
@@ -34,11 +39,14 @@ public:
 	}
 	
 	void cargarTextura() override {
-		cargarSecuencia(animDerecha, "realista_derecho", 4);
-		cargarSecuencia(animIzquierda, "realista_izquierdo", 4);
-		cargarSecuencia(animArriba, "realista_atras", 4);
+		cargarSecuencia(animDerecha, "realista_derecho", 1);
+		cargarSecuencia(animIzquierda, "realista_izquierdo", 1);
+		cargarSecuencia(animArriba, "realista_atras", 1);
+		
 		sf::Texture tFrente;
-		if(tFrente.loadFromFile("sprites/realista_frente.png")) animAbajo.push_back(tFrente);
+		if(tFrente.loadFromFile("sprites/realista_frente_1.png")) animAbajo.push_back(tFrente);
+		else if(tFrente.loadFromFile("sprites/realista_frente.png")) animAbajo.push_back(tFrente);
+		
 		if (!animAbajo.empty()) getSprite().setTexture(animAbajo[0], true);
 	}
 	
@@ -46,45 +54,78 @@ public:
 		if (cooldownAtaque > 0) cooldownAtaque--;
 		bool atacando = false;
 		
-		// --- AHORA USAMOS getMapaEntidades() ---
-		if (getMapaEntidades() != nullptr && cooldownAtaque == 0) {
+		Entidad* objetivoMasCercano = nullptr;
+		float distMinima = 9999.0f;
+		
+		// 1. RADAR DE ENEMIGOS
+		if (getMapaEntidades() != nullptr) {
 			for (Entidad* e : *getMapaEntidades()) {
 				if (e->getTipo() == "FRANCES" && e->estaVivo()) {
-					float dist = std::sqrt(std::pow(e->getX() - getX(), 2) + std::pow(e->getY() - getY(), 2));
-					if (dist <= 2.2f) {
-						Personaje* enemigo = static_cast<Personaje*>(e);
-						enemigo->recibirDanio(15.0f); 
-						cooldownAtaque = 60; 
-						setTimerAtaque(12); 
-						atacando = true;
-						break; 
-					}
+					float dx = e->getX() - getX();
+					float dy = e->getY() - getY();
+					float dist = std::sqrt(dx*dx + dy*dy);
+					if (dist < distMinima) { distMinima = dist; objetivoMasCercano = e; }
 				}
 			}
 		}
 		
-		if (!atacando && lider && lider->estaVivo()) {
-			float dx = lider->getX() - this->getX();
-			float dy = lider->getY() - this->getY();
-			float dist = std::sqrt(dx*dx + dy*dy);
+		// 2. ATACAR SOLO EN DEFENSA PROPIA (1.5f)
+		if (objetivoMasCercano && distMinima <= 1.5f && cooldownAtaque == 0) {
+			Personaje* enemigo = static_cast<Personaje*>(objetivoMasCercano);
+			enemigo->recibirDanio(15.0f);
+			cooldownAtaque = 60; 
+			setTimerAtaque(20); 
+			atacando = true;
 			
-			if (dist > 3.5f && dist < 20.0f) { 
+			float dx = objetivoMasCercano->getX() - getX();
+			float dy = objetivoMasCercano->getY() - getY();
+			if (std::abs(dx) > std::abs(dy)) setDireccion(dx > 0 ? DERECHA : IZQUIERDA);
+			else setDireccion(dy > 0 ? ABAJO : ARRIBA);
+		}
+		
+		// 3. IA DE FORMACIÓN ESTRICTA (Sin iniciativa propia)
+		if (!atacando) {
+			float destX = getX();
+			float destY = getY();
+			bool debeMoverse = false;
+			
+			if (lider && lider->estaVivo()) {
+				float posIdealX = lider->getX() + fX; 
+				float posIdealY = lider->getY() + fY; 
+				
+				float dx = posIdealX - getX();
+				float dy = posIdealY - getY();
+				float distAFormacion = std::sqrt(dx*dx + dy*dy);
+				
+				if (distAFormacion > 1.2f) {
+					destX = posIdealX;
+					destY = posIdealY;
+					debeMoverse = true;
+				}
+			}
+			
+			if (debeMoverse) {
+				float dx = destX - getX();
+				float dy = destY - getY();
 				float movX = 0, movY = 0;
+				
 				if (std::abs(dx) > std::abs(dy)) movX = (dx > 0) ? 1 : -1;
 				else movY = (dy > 0) ? 1 : -1;
 				
-				moverse(movX, movY);
+				float oldX = getX(); float oldY = getY();
+				moverse(movX, movY); 
 				
-				// --- AHORA USAMOS getCooldownMovimiento() ---
-				if (getCooldownMovimiento() == 0) {
-					if (movX != 0) moverse(0, (dy > 0) ? 1 : -1);
-					else moverse((dx > 0) ? 1 : -1, 0);
+				// Sistema de Deslizamiento
+				if (std::abs(getX() - oldX) < 0.01f && std::abs(getY() - oldY) < 0.01f && getCooldownMovimiento() == 0) {
+					if (movX != 0) moverse(0, (dy > 0) ? 1 : -1); 
+					else moverse((dx > 0) ? 1 : -1, 0);           
 				}
 			} else {
 				resetearMovimiento(); 
 			}
 		}
 		
+		// 4. ANIMACIONES
 		if (getTimerAtaque() > 0) {
 			setTimerAtaque(getTimerAtaque() - 1);
 			float desplazamiento = (getTimerAtaque() > 6) ? 0.4f : 0.0f; 

@@ -9,18 +9,15 @@
 
 class SanMartin : public Personaje {
 private:
-	int idTraje; // 0 = Tutorial (Uniforme Base), 1 = España, 2 = Andes, etc.
+	int idTraje; // 0 = Tutorial, 1 = España, 2 = San Lorenzo/Andes
 	
-	std::vector<sf::Texture> animDerecha;
-	std::vector<sf::Texture> animIzquierda;
-	std::vector<sf::Texture> animArriba; 
-	std::vector<sf::Texture> animAbajo;  
+	// Vectores de caminata
+	std::vector<sf::Texture> animDerecha, animIzquierda, animArriba, animAbajo;  
 	
-	std::vector<sf::Texture> animAtaqueDerecha;
-	std::vector<sf::Texture> animAtaqueIzquierda;
+	// Vectores de ataque (Estandarizados como "atk")
+	std::vector<sf::Texture> atkDerecha, atkIzquierda, atkArriba, atkAbajo; 
 	
 public:
-	// --- NUEVO CONSTRUCTOR: Ahora recibe el número del nivel/traje ---
 	SanMartin(float x, float y, int traje = 0) : Personaje(x, y, 100, 6) {
 		idTraje = traje;
 		cargarTextura();
@@ -28,39 +25,44 @@ public:
 	
 	std::string getTipo() override { return "PROCER"; }
 	
-	// --- NUEVA FUNCIÓN INTELIGENTE DE CARGA CON RESPALDO ---
-	void cargarImagenConRespaldo(std::vector<sf::Texture>& vector, std::string nombreIdeal, std::string nombreRespaldo) {
-		sf::Texture t;
-		// Intenta cargar el traje nuevo primero
-		if (t.loadFromFile("sprites/" + nombreIdeal + ".png")) {
-			vector.push_back(t);
-		} 
-		// Si falla (porque aún no lo dibujaste), carga el traje normal
-		else if (t.loadFromFile("sprites/" + nombreRespaldo + ".png")) {
-			vector.push_back(t);
+	// --- FUNCIÓN RECUPERADA: Lista para el futuro ---
+	// Si hoy le pasas '1', carga 1 sprite. Si mañana tienes 4, le pasas '4' y listo.
+	void cargarSecuencia(std::vector<sf::Texture>& vector, std::string nombreBase, int cantidad) {
+		for (int i = 1; i <= cantidad; i++) {
+			sf::Texture t;
+			// Primero intenta cargar "nombre_1.png"
+			if (t.loadFromFile("sprites/" + nombreBase + "_" + std::to_string(i) + ".png")) {
+				vector.push_back(t);
+			} 
+			// Si no existe, intenta cargar "nombre.png" (como respaldo para tus sprites actuales)
+			else if (t.loadFromFile("sprites/" + nombreBase + ".png")) {
+				vector.push_back(t);
+			}
 		}
 	}
 	
 	void cargarTextura() override {
-		// Determinamos el prefijo según el nivel en el que estamos
-		std::string prefijo = "san_martin";
-		if (idTraje == 1) prefijo = "san_martin_espana"; // Nivel 1
-		// if (idTraje == 2) prefijo = "san_martin_andes"; // Futuro Nivel 2
+		std::string prefijo = "";
 		
-		// 1. ANIMACIONES DE CAMINAR (Busca ej: san_martin_espana_frente_1.png)
-		cargarImagenConRespaldo(animAbajo, prefijo + "_frente_1", "san_martin_frente_1");
-		cargarImagenConRespaldo(animArriba, prefijo + "_atras_1", "san_martin_atras_1");
-		cargarImagenConRespaldo(animDerecha, prefijo + "_derecho_1", "san_martin_derecho_1");
-		cargarImagenConRespaldo(animIzquierda, prefijo + "_izquierdo_1", "san_martin_izquierdo_1");
+		// CORRECCIÓN: Usamos idTraje
+		if (idTraje == 0) prefijo = "san_martin_espana"; 
+		else if (idTraje == 1) prefijo = "san_martin_espana";          
+		else if (idTraje == 2) prefijo = "san_martin"; 
 		
-		// 2. SPRITES DE ATAQUE
-		cargarImagenConRespaldo(animAtaqueDerecha, prefijo + "_ataque_derecho_2", "san_martin_ataque_derecho_2");
-		cargarImagenConRespaldo(animAtaqueIzquierda, prefijo + "_ataque_izquierdo_2", "san_martin_ataque_izquierdo_2");
+		// Pasamos el número '1' para mantener tu lógica de un solo sprite
+		cargarSecuencia(animDerecha, prefijo + "_derecho", 1);
+		cargarSecuencia(animIzquierda, prefijo + "_izquierdo", 1);
+		cargarSecuencia(animArriba, prefijo + "_atras", 1);
+		cargarSecuencia(animAbajo, prefijo + "_frente", 1);
+		
+		cargarSecuencia(atkDerecha, prefijo + "_ataque_derecho", 1);
+		cargarSecuencia(atkIzquierda, prefijo + "_ataque_izquierdo", 1);
+		cargarSecuencia(atkArriba, prefijo + "_ataque_atras", 1);
+		cargarSecuencia(atkAbajo, prefijo + "_ataque_frente", 1);
 		
 		if (!animAbajo.empty()) getSprite().setTexture(animAbajo[0], true);
 	}
 	
-	// ... (Mantén tus funciones actualizar() y atacar() exactamente igual que antes) ...
 	void actualizar() override {
 		if (getTimerAtaque() > 0) {
 			setTimerAtaque(getTimerAtaque() - 1);
@@ -72,12 +74,13 @@ public:
 			case ARRIBA:    setOffsetX(0); setOffsetY(-desplazamiento); break;
 			}
 			
+			// CORRECCIÓN: Usamos los vectores atk directamente
 			std::vector<sf::Texture>* animActiva = nullptr;
 			switch (getDireccion()) {
-			case DERECHA:   animActiva = &animAtaqueDerecha; break;
-			case IZQUIERDA: animActiva = &animAtaqueIzquierda; break;
-			case ARRIBA:    animActiva = &animArriba; break; 
-			case ABAJO:     animActiva = &animAbajo; break;
+			case DERECHA:   animActiva = &atkDerecha; break;
+			case IZQUIERDA: animActiva = &atkIzquierda; break;
+			case ARRIBA:    animActiva = &atkArriba; break; 
+			case ABAJO:     animActiva = &atkAbajo; break;
 			}
 			if (animActiva != nullptr && !animActiva->empty()) {
 				getSprite().setTexture((*animActiva)[0], true);
@@ -95,7 +98,6 @@ public:
 	}
 	
 	void atacar(const std::vector<Entidad*>& mapaEntidades) {
-		// 1. Proyectamos el "Punto de Impacto" hacia donde estamos mirando
 		float targetX = getX();
 		float targetY = getY();
 		
@@ -106,30 +108,27 @@ public:
 		case DERECHA:   targetX += 1.0f; break;
 		}
 		
-		// 2. Revisamos si alguien fue alcanzado por el sable
 		for (Entidad* e : mapaEntidades) {
-			// Solo atacamos a enemigos vivos (Franceses, Realistas o los Muñecos de práctica)
 			if (e != this && e->estaVivo() && 
 				(e->getTipo() == "FRANCES" || e->getTipo() == "REALISTA" || e->getTipo() == "PRACTICA")) {
 				
-				// Calculamos la distancia entre el enemigo y nuestro Punto de Impacto
 				float dx = e->getX() - targetX;
 				float dy = e->getY() - targetY;
 				float dist = std::sqrt(dx*dx + dy*dy);
 				
-				// Si el enemigo está muy cerca del impacto (margen de 1 bloque)
-				if (dist <= 1.2f) { 
+				if (dist <= 1.0f) { 
 					Personaje* enemigo = dynamic_cast<Personaje*>(e);
 					if (enemigo) {
-						enemigo->recibirDanio(15.0f); // Daño del sablazo
+						enemigo->recibirDanio(15.0f); 
 					}
 				}
 			}
 		}
 		
-		// 3. Activamos la animación visual de la estocada
 		setTimerAtaque(12); 
 	}
+	
+	
 };
 
 #endif

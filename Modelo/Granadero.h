@@ -9,15 +9,13 @@
 class Granadero : public Personaje {
 private:
 	SanMartin* lider;
-	int flanco; // --- NUEVO: -2 (Lejos Izq), -1 (Izq), 1 (Der), 2 (Lejos Der)
-	std::vector<sf::Texture> animDerecha;
-	std::vector<sf::Texture> animIzquierda;
-	std::vector<sf::Texture> animArriba;
-	std::vector<sf::Texture> animAbajo;
+	int flanco; 
+	std::vector<sf::Texture> animDerecha, animIzquierda, animArriba, animAbajo;
+	// --- NUEVO: Vectores de Ataque ---
+	std::vector<sf::Texture> atkDerecha, atkIzquierda, atkArriba, atkAbajo;
 	int cooldownAtaque;
 	
 public:
-	// Bajamos un poquito la velocidad (de 6 a 4) para que marchen con más disciplina
 	Granadero(float x, float y, SanMartin* heroe, int posicionFlanco) : Personaje(x, y, 120, 4) { 
 		lider = heroe;
 		flanco = posicionFlanco; 
@@ -25,7 +23,7 @@ public:
 		cargarTextura();
 	}
 	
-	std::string getTipo() override { return "REALISTA_ALIADO"; }
+	std::string getTipo() override { return "GRANADERO"; }
 	
 	void cargarSecuencia(std::vector<sf::Texture>& vector, std::string nombreBase, int cantidad) {
 		for (int i = 1; i <= cantidad; i++) {
@@ -37,13 +35,17 @@ public:
 	}
 	
 	void cargarTextura() override {
-		cargarSecuencia(animDerecha, "granadero_derecho", 4);
-		cargarSecuencia(animIzquierda, "granadero_izquierdo", 4);
-		cargarSecuencia(animArriba, "granadero_atras", 4);
+		// Caminata
+		cargarSecuencia(animDerecha, "granadero_derecho", 1);
+		cargarSecuencia(animIzquierda, "granadero_izquierdo", 1);
+		cargarSecuencia(animArriba, "granadero_atras", 1);
+		cargarSecuencia(animAbajo, "granadero_frente", 1);
 		
-		sf::Texture tFrente;
-		if(tFrente.loadFromFile("sprites/granadero_frente_1.png")) animAbajo.push_back(tFrente);
-		else if(tFrente.loadFromFile("sprites/granadero_frente.png")) animAbajo.push_back(tFrente);
+		// Ataques
+		cargarSecuencia(atkDerecha, "granadero_ataque_derecho", 1);
+		cargarSecuencia(atkIzquierda, "granadero_ataque_izquierdo", 1);
+		cargarSecuencia(atkArriba, "granadero_ataque_atras", 1);
+		cargarSecuencia(atkAbajo, "granadero_ataque_frente", 1);
 		
 		if (!animAbajo.empty()) getSprite().setTexture(animAbajo[0], true);
 	}
@@ -70,11 +72,12 @@ public:
 			}
 		}
 		
-		if (objetivoMasCercano && distMinima <= 2.2f && cooldownAtaque == 0) {
+		// 2. ATACAR SOLO EN DEFENSA PROPIA (Reducido a 1.5f)
+		if (objetivoMasCercano && distMinima <= 1.5f && cooldownAtaque == 0) {
 			Personaje* enemigo = static_cast<Personaje*>(objetivoMasCercano);
 			enemigo->recibirDanio(20.0f);
 			cooldownAtaque = 60; 
-			setTimerAtaque(12); 
+			setTimerAtaque(20); 
 			atacando = true;
 			
 			float dx = objetivoMasCercano->getX() - getX();
@@ -83,28 +86,23 @@ public:
 			else setDireccion(dy > 0 ? ABAJO : ARRIBA);
 		}
 		
+		// 3. IA DE ESCOLTA (No persiguen, solo acompañan)
 		if (!atacando) {
 			float destX = getX();
 			float destY = getY();
 			bool debeMoverse = false;
 			
-			// PRIORIDAD A: Autodefensa (Solo rompen formación si el enemigo está a 3 casillas o menos)
-			if (objetivoMasCercano && distMinima <= 3.0f) {
-				destX = objetivoMasCercano->getX();
-				destY = objetivoMasCercano->getY();
-				debeMoverse = (distMinima > 1.2f); 
-			} 
-			// PRIORIDAD B: Mantener la formación de Pinza
-			else if (lider && lider->estaVivo()) {
-				// El destino ideal es "X casillas al lado de San Martín" y "1 casilla atrás"
-				float posIdealX = lider->getX() + (flanco * 2.0f); 
-				float posIdealY = lider->getY() + 1.0f; 
+			if (lider && lider->estaVivo()) {
+				// Formación de V invertida detrás de San Martín
+				// Los de flanco -1 y 1 van un paso atrás. Los de -2 y 2 van dos pasos atrás.
+				float posIdealX = lider->getX() + (flanco * 1.5f); 
+				float posIdealY = lider->getY() + std::abs(flanco); // Siempre Y positivo (Atrás)
 				
 				float dx = posIdealX - getX();
 				float dy = posIdealY - getY();
 				float distAFormacion = std::sqrt(dx*dx + dy*dy);
 				
-				// Si están lejos de su puesto en la formación, marchan hacia allí
+				// Si se alejan de su puesto, lo corrigen
 				if (distAFormacion > 1.0f) {
 					destX = posIdealX;
 					destY = posIdealY;
@@ -132,15 +130,16 @@ public:
 			}
 		}
 		
-		// 4. ANIMACIONES (Igual que antes)
+		// --- ANIMACIONES ---
 		if (getTimerAtaque() > 0) {
 			setTimerAtaque(getTimerAtaque() - 1);
-			float desplazamiento = (getTimerAtaque() > 6) ? 0.4f : 0.0f; 
+			setOffsetX(0); 
+			setOffsetY(0); 
 			switch (getDireccion()) {
-			case DERECHA: setOffsetX(desplazamiento); setOffsetY(0); break;
-			case IZQUIERDA: setOffsetX(-desplazamiento); setOffsetY(0); break;
-			case ABAJO: setOffsetX(0); setOffsetY(desplazamiento); break;
-			case ARRIBA: setOffsetX(0); setOffsetY(-desplazamiento); break;
+			case DERECHA: reproducirAnimacion(atkDerecha.empty() ? animDerecha : atkDerecha); break;
+			case IZQUIERDA: reproducirAnimacion(atkIzquierda.empty() ? animIzquierda : atkIzquierda); break;
+			case ABAJO: reproducirAnimacion(atkAbajo.empty() ? animAbajo : atkAbajo); break;
+			case ARRIBA: reproducirAnimacion(atkArriba.empty() ? animArriba : atkArriba); break;
 			}
 		} else {
 			setOffsetX(0); setOffsetY(0);

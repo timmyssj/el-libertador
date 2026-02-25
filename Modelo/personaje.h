@@ -57,13 +57,26 @@ public:
 	void setMapaEntidades(const std::vector<Entidad*>* mapa) { mapaEntidades = mapa; }
 	
 	bool casillaOcupada(float targetX, float targetY) {
-		// --- CORRECCIÓN: Límites exactos de la matriz (0 a 29 y 0 a 19) ---
+		// Límites exactos de la matriz (0 a 29 y 0 a 19)
 		if (targetX < 0 || targetX >= 30 || targetY < 0 || targetY >= 20) return true;
 		
 		if (mapaEntidades) {
 			for (Entidad* e : *mapaEntidades) {
 				if (e != this && e->estaVivo()) {
 					if (std::abs(e->getX() - targetX) < 0.1f && std::abs(e->getY() - targetY) < 0.1f) {
+						
+						// --- NUEVO: EL PASE VIP DE SAN MARTÍN ---
+						// 1. Si San Martín choca con sus propias tropas, las ignora (las atraviesa)
+						if (getTipo() == "PROCER" && (e->getTipo() == "ALIADO" || e->getTipo() == "GRANADERO")) {
+							continue; 
+						}
+						
+						// 2. Si las tropas chocan con San Martín al intentar apartarse, también lo ignoran
+						if ((getTipo() == "ALIADO" || getTipo() == "GRANADERO") && e->getTipo() == "PROCER") {
+							continue;
+						}
+						
+						// Si no es ninguna de esas excepciones, entonces es un choque real (Ej: Enemigo o Árbol)
 						return true;
 					}
 				}

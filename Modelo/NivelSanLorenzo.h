@@ -59,7 +59,7 @@ public:
 		}
 		
 		// --- 1. Nace el Héroe ---
-		setHeroe(new SanMartin(15, 17, 1)); 
+		setHeroe(new SanMartin(15, 17, 2)); 
 		agregarEntidad(getHeroe()); 
 		
 		// --- 2. Nacen los Granaderos en Formación de Pinza ---
@@ -76,6 +76,9 @@ public:
 		agregarEntidad(new Enemigo(20, 5, getHeroe()));
 		agregarEntidad(new Enemigo(12, 3, getHeroe()));
 		agregarEntidad(new Enemigo(18, 3, getHeroe()));
+		
+		// Nace el Convento (x=15 es el centro, y=4 es arriba)
+		agregarEntidad(new Obstaculo(15, 4, "CONVENTO"));
 		
 		// --- Activar las colisiones para todos ---
 		for (Entidad* e : getEntidades()) {
@@ -94,9 +97,8 @@ public:
 			int y = (int)getHeroe()->getY();
 			if (x >= 0 && x < 30 && y >= 0 && y < 20) {
 				if (getContenidoCelda(x, y) == SALIDA_NIVEL) {
-					if (!hayEnemigosVivos()) {
-						setCompletado(true);
-					}
+					// --- CORRECCIÓN RPG: Si tocas la puerta, entras (haya o no enemigos afuera) ---
+					setCompletado(true); 
 				}
 			}
 		}

@@ -3,6 +3,7 @@
 #include "NivelTutorial.h"
 #include "NivelEspana.h"
 #include "NivelSanLorenzo.h"
+#include "NivelInteriorConvento.h"
 #include <iostream>
 #include <cmath>
 #include <fstream> 
@@ -72,7 +73,15 @@ void Juego::procesarTeclaArriba() {
 		if (nivelActual->estaCompletado()) return; 
 		
 		SanMartin* heroe = nivelActual->getHeroe();
-		if (heroe) heroe->moverse(0, -1);
+		if (heroe) {
+			int tx = (int)heroe->getX();
+			int ty = (int)heroe->getY() - 1; 
+			
+			// Usamos la nueva colisión inteligente
+			if (nivelActual->esCeldaLibreParaHeroe(tx, ty)) {
+				heroe->moverse(0, -1);
+			}
+		}
 	}
 }
 
@@ -84,47 +93,56 @@ void Juego::procesarTeclaAbajo() {
 	else if (estadoActual == JUGANDO && nivelActual != nullptr) {
 		if (nivelActual->estaCompletado()) return;
 		SanMartin* heroe = nivelActual->getHeroe();
-		if (heroe) heroe->moverse(0, 1);
+		if (heroe) {
+			int tx = (int)heroe->getX();
+			int ty = (int)heroe->getY() + 1; 
+			
+			if (nivelActual->esCeldaLibreParaHeroe(tx, ty)) {
+				heroe->moverse(0, 1);
+			}
+		}
 	}
 }
 
 void Juego::procesarTeclaIzquierda() {
 	if (estadoActual == CONFIGURACION) {
 		int op = menuConfig->getOpcionActual();
-		if (op == 0) { 
-			volumenMusica -= 10;
-			if (volumenMusica < 0) volumenMusica = 0;
-		}
-		else if (op == 1) {
-			volumenSonidos -= 10;
-			if (volumenSonidos < 0) volumenSonidos = 0;
-		}
+		if (op == 0) { volumenMusica -= 10; if (volumenMusica < 0) volumenMusica = 0; }
+		else if (op == 1) { volumenSonidos -= 10; if (volumenSonidos < 0) volumenSonidos = 0; }
 		actualizarTextosConfig(); 
 	}
 	else if (estadoActual == JUGANDO && nivelActual != nullptr) {
 		if (nivelActual->estaCompletado()) return;
 		SanMartin* heroe = nivelActual->getHeroe();
-		if (heroe) heroe->moverse(-1, 0);
+		if (heroe) {
+			int tx = (int)heroe->getX() - 1;
+			int ty = (int)heroe->getY(); 
+			
+			if (nivelActual->esCeldaLibreParaHeroe(tx, ty)) {
+				heroe->moverse(-1, 0);
+			}
+		}
 	}
 }
 
 void Juego::procesarTeclaDerecha() {
 	if (estadoActual == CONFIGURACION) {
 		int op = menuConfig->getOpcionActual();
-		if (op == 0) { 
-			volumenMusica += 10;
-			if (volumenMusica > 100) volumenMusica = 100;
-		}
-		else if (op == 1) { 
-			volumenSonidos += 10;
-			if (volumenSonidos > 100) volumenSonidos = 100;
-		}
+		if (op == 0) { volumenMusica += 10; if (volumenMusica > 100) volumenMusica = 100; }
+		else if (op == 1) { volumenSonidos += 10; if (volumenSonidos > 100) volumenSonidos = 100; }
 		actualizarTextosConfig();
 	}
 	else if (estadoActual == JUGANDO && nivelActual != nullptr) {
 		if (nivelActual->estaCompletado()) return;
 		SanMartin* heroe = nivelActual->getHeroe();
-		if (heroe) heroe->moverse(1, 0);
+		if (heroe) {
+			int tx = (int)heroe->getX() + 1;
+			int ty = (int)heroe->getY(); 
+			
+			if (nivelActual->esCeldaLibreParaHeroe(tx, ty)) {
+				heroe->moverse(1, 0);
+			}
+		}
 	}
 }
 
@@ -242,6 +260,17 @@ void Juego::teclaEscape() {
 
 void Juego::actualizar() {
 	if (estadoActual == JUGANDO && nivelActual != nullptr) {
+		
+		// --- LA MAGIA DEL TELETRANSPORTE ---
+		if (nivelActual->estaCompletado() && nivelJugandoId == 2) {
+			delete nivelActual;
+			nivelActual = new NivelInteriorConvento(); // Cargamos el interior
+			nivelJugandoId = 3; 
+			prepararNivel(nivelActual); // Muestra los diálogos de historia del nuevo nivel
+			return; // Cortamos aquí para que no salte la victoria
+		}
+		
+		// Comportamiento normal para los demás niveles (Muestra Victoria)
 		if (nivelActual->estaCompletado()) return; 
 		
 		SanMartin* heroe = nivelActual->getHeroe();
