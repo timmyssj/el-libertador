@@ -62,12 +62,12 @@ public:
 		setHeroe(new SanMartin(15, 17, 1)); 
 		agregarEntidad(getHeroe()); 
 		
-		// --- 2. Nacen los Granaderos (Reemplazando a los Aliados) ---
-		// Nota: Asegúrate de que el constructor de Granadero reciba (x, y, heroe)
-		agregarEntidad(new Granadero(13, 17, getHeroe()));
-		agregarEntidad(new Granadero(17, 17, getHeroe()));
-		agregarEntidad(new Granadero(11, 18, getHeroe()));
-		agregarEntidad(new Granadero(19, 18, getHeroe()));
+		// --- 2. Nacen los Granaderos en Formación de Pinza ---
+		// Le pasamos -1 (Izquierda), 1 (Derecha), -2 (Extremo Izquierdo), 2 (Extremo Derecho)
+		agregarEntidad(new Granadero(13, 17, getHeroe(), -1));
+		agregarEntidad(new Granadero(17, 17, getHeroe(), 1));
+		agregarEntidad(new Granadero(11, 18, getHeroe(), -2));
+		agregarEntidad(new Granadero(19, 18, getHeroe(), 2));
 		
 		// --- 3. Nace el Ejército Realista (Reemplazando a los Franceses) ---
 		// Nota: Asegúrate de que el constructor de Enemigo reciba (x, y, heroe)

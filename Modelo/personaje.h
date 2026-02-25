@@ -140,6 +140,9 @@ public:
 		}
 	}
 	
+	// Permite girar al personaje hacia un lado sin tener que caminar
+	void setDireccion(Direccion nuevaDireccion) { direccionActual = nuevaDireccion; }
+	
 	virtual void cargarTextura() = 0; 
 };
 
