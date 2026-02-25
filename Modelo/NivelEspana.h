@@ -11,6 +11,10 @@
 class NivelEspana : public Nivel {
 public:
 	NivelEspana() {
+		setCompletado(false);
+		
+		setArchivoFondo("fondos/fondo_nivel_1.png");
+		
 		setTituloIntro("NIVEL 1: BATALLA EN ESPANA");
 		addTextoIntro("Ano 1808. Arjonilla, Espana.");
 		addTextoIntro("Las tropas de Napoleon invaden la peninsula.");

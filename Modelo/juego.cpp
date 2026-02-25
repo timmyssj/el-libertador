@@ -1,7 +1,8 @@
 #include "juego.h"
-#include "NivelTutorial.h"
 #include "Frances.h"
+#include "NivelTutorial.h"
 #include "NivelEspana.h"
+#include "NivelSanLorenzo.h"
 #include <iostream>
 #include <cmath>
 #include <fstream> 
@@ -19,7 +20,7 @@ Juego::Juego() {
 	nivelMaximoDesbloqueado = 0; 
 	nivelJugandoId = 0; 
 	
-	menuNiveles = new Menu({"0. TUTORIAL", "1. BATALLA EN ESPANA", "VOLVER"});
+	menuNiveles = new Menu({"1. BATALLA EN ESPAÑA", "2. BATALLA DE SAN LORENZO", "VOLVER"});
 	
 	menuConfig = new Menu({"Musica", "Sonidos", "Volver"}); 
 	actualizarTextosConfig(); 
@@ -130,11 +131,16 @@ void Juego::procesarTeclaDerecha() {
 void Juego::procesarTeclaEnter() {
 	if (estadoActual == EN_MENU) {
 		int op = menuPrincipal->getOpcionActual();
-		if (op == 0) { 
+		if (op == 0) { // NUEVA PARTIDA
 			nivelMaximoDesbloqueado = 0; 
 			guardarProgreso(); 
-			estadoActual = SELECCION_NIVEL;
-			menuNiveles->reiniciarCursor();
+			
+			// --- NUEVO: Va directo al tutorial sin pasar por Selección de Nivel ---
+			if (nivelActual) delete nivelActual;
+			nivelActual = new NivelTutorial();
+			nivelJugandoId = 0; // El tutorial es el ID 0
+			
+			prepararNivel(nivelActual);
 		}
 		else if (op == 1) { 
 			cargarProgreso(); 
@@ -157,13 +163,16 @@ void Juego::procesarTeclaEnter() {
 			return;
 		}
 		
-		if (op <= nivelMaximoDesbloqueado) {
+		int nivelRealId = op + 1; 
+		
+		if (nivelRealId <= nivelMaximoDesbloqueado) {
 			if (nivelActual) delete nivelActual;
 			
-			if (op == 0) nivelActual = new NivelTutorial();
-			else if (op == 1) nivelActual = new NivelEspana(); 
+			if (nivelRealId == 1) nivelActual = new NivelEspana(); 
+			// --- NUEVO: CARGAR SAN LORENZO ---
+			if (nivelRealId == 2) nivelActual = new NivelSanLorenzo(); 
 			
-			nivelJugandoId = op; 
+			nivelJugandoId = nivelRealId; 
 			
 			prepararNivel(nivelActual);
 			

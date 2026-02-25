@@ -94,24 +94,41 @@ public:
 		}
 	}
 	
-	void atacar(const std::vector<Entidad*>& entidadesEnElMapa) {
-		if (getTimerAtaque() > 0) return;
-		setTimerAtaque(20); 
-		bool golpeoAlgo = false;
-		for (Entidad* e : entidadesEnElMapa) {
-			if (e == this) continue; 
-			if ((e->getTipo() == "REALISTA" || e->getTipo() == "PRACTICA" || e->getTipo() == "FRANCES") && e->estaVivo()) {
-				float dx = e->getX() - this->getX(); 
-				float dy = e->getY() - this->getY();
+	void atacar(const std::vector<Entidad*>& mapaEntidades) {
+		// 1. Proyectamos el "Punto de Impacto" hacia donde estamos mirando
+		float targetX = getX();
+		float targetY = getY();
+		
+		switch (getDireccion()) {
+		case ARRIBA:    targetY -= 1.0f; break;
+		case ABAJO:     targetY += 1.0f; break;
+		case IZQUIERDA: targetX -= 1.0f; break;
+		case DERECHA:   targetX += 1.0f; break;
+		}
+		
+		// 2. Revisamos si alguien fue alcanzado por el sable
+		for (Entidad* e : mapaEntidades) {
+			// Solo atacamos a enemigos vivos (Franceses, Realistas o los Muñecos de práctica)
+			if (e != this && e->estaVivo() && 
+				(e->getTipo() == "FRANCES" || e->getTipo() == "REALISTA" || e->getTipo() == "PRACTICA")) {
+				
+				// Calculamos la distancia entre el enemigo y nuestro Punto de Impacto
+				float dx = e->getX() - targetX;
+				float dy = e->getY() - targetY;
 				float dist = std::sqrt(dx*dx + dy*dy);
-				if (dist <= 2.2f) { 
-					Personaje* enemigo = static_cast<Personaje*>(e);
-					enemigo->recibirDanio(15.0f); 
-					golpeoAlgo = true;
+				
+				// Si el enemigo está muy cerca del impacto (margen de 1 bloque)
+				if (dist <= 1.2f) { 
+					Personaje* enemigo = dynamic_cast<Personaje*>(e);
+					if (enemigo) {
+						enemigo->recibirDanio(15.0f); // Daño del sablazo
+					}
 				}
 			}
 		}
-		if (golpeoAlgo) std::cout << "[SAN MARTIN] ¡Sablazo! Impacto al enemigo." << std::endl;
+		
+		// 3. Activamos la animación visual de la estocada
+		setTimerAtaque(12); 
 	}
 };
 
