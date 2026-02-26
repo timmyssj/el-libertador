@@ -5,13 +5,20 @@
 #include "Obstaculo.h"
 #include "enemigo.h"   // <--- Tu clase Enemigo (Realista)
 #include "Granadero.h" // <--- Tu clase Granadero
+#include "Cabral.h"
 #include <fstream>  
 #include <iostream> 
 
 class NivelSanLorenzo : public Nivel {
+private:
+	
+	Cabral* sargentoCabral;
+	bool eventoSacrificioOcurrido;
+	
 public:
 	NivelSanLorenzo() {
 		setCompletado(false); 
+		eventoSacrificioOcurrido = false;
 		
 		// El pasto a las afueras del Convento de San Carlos
 		setArchivoFondo("fondos/suelo_sanlorenzo.png"); 
@@ -61,6 +68,9 @@ public:
 		// --- 1. Nace el Héroe ---
 		setHeroe(new SanMartin(15, 17, 2)); 
 		agregarEntidad(getHeroe()); 
+		// --- Nace Cabral ---
+		sargentoCabral = new Cabral(16, 15, getHeroe());
+		agregarEntidad(sargentoCabral);
 		
 		// --- 2. Nacen los Granaderos en Formación de Pinza ---
 		// Le pasamos -1 (Izquierda), 1 (Derecha), -2 (Extremo Izquierdo), 2 (Extremo Derecho)
@@ -88,18 +98,45 @@ public:
 	}
 	
 	void actualizar() override {
+		// --- 1. SI ESTAMOS EN CINEMÁTICA, EL JUEGO SE CONGELA ---
+		if (enCinematica()) return; 
+		
+		// 2. Actualizar tropas y héroe normalmente
 		for (Entidad* e : getEntidades()) {
 			if (e->estaVivo()) e->actualizar();
 		}
 		
 		if (getHeroe() && getHeroe()->estaVivo()) {
+			
+			// --- 3. DETECTAR EL MOMENTO CRÍTICO ---
+			if (!eventoSacrificioOcurrido && sargentoCabral && sargentoCabral->estaVivo()) {
+				
+				if (getHeroe()->getVida() <= getHeroe()->getVidaMax() * 0.40f) {
+					// Disparamos la pantalla cinematica
+					// Disparamos la pantalla cinematica con renglones más cortos
+					setMensajeCinematica(
+										 "¡El caballo de San Martin cae en combate!\n\n"
+										 "El sargento Juan Bautista Cabral se arroja\n"
+										 "sobre las bayonetas enemigas para\n"
+										 "salvar a su comandante.\n\n"
+										 "Sus ultimas palabras resuenan:\n\n"
+										 "'¡Muero contento, hemos batido al enemigo!'"
+										 );
+					
+					// Cabral se mueve sobre San Martín y da su vida
+					sargentoCabral->setX(getHeroe()->getX());
+					sargentoCabral->setY(getHeroe()->getY());
+					sargentoCabral->darLaVida(); 
+					getHeroe()->curarCompleto(); 
+					
+					eventoSacrificioOcurrido = true;
+				}
+			}
+			
 			int x = (int)getHeroe()->getX();
 			int y = (int)getHeroe()->getY();
 			if (x >= 0 && x < 30 && y >= 0 && y < 20) {
-				if (getContenidoCelda(x, y) == SALIDA_NIVEL) {
-					// --- CORRECCIÓN RPG: Si tocas la puerta, entras (haya o no enemigos afuera) ---
-					setCompletado(true); 
-				}
+				if (getContenidoCelda(x, y) == SALIDA_NIVEL) setCompletado(true);
 			}
 		}
 	}

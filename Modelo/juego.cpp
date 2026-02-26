@@ -4,6 +4,7 @@
 #include "NivelEspana.h"
 #include "NivelSanLorenzo.h"
 #include "NivelInteriorConvento.h"
+#include "Item.h"
 #include <iostream>
 #include <cmath>
 #include <fstream> 
@@ -225,6 +226,10 @@ void Juego::procesarTeclaEnter() {
 		}
 	}
 	else if (estadoActual == JUGANDO && nivelActual != nullptr) {
+		if (nivelActual->enCinematica()) {
+			nivelActual->limpiarCinematica();
+			return; 
+		}
 		if (nivelActual->estaCompletado()) {
 			if (nivelJugandoId >= nivelMaximoDesbloqueado) { 
 				nivelMaximoDesbloqueado = nivelJugandoId + 1;
@@ -277,6 +282,30 @@ void Juego::actualizar() {
 		if (heroe) heroe->resetearMovimiento();
 		
 		nivelActual->actualizar();
+		
+		// --- NUEVO: SISTEMA DE RECOLECCIÓN DE ITEMS ---
+		if (heroe && heroe->estaVivo()) {
+			for (Entidad* e : nivelActual->getEntidades()) {
+				// Si la entidad es un ITEM y está viva (no ha sido recogida)
+				if (e->estaVivo() && e->getTipo().substr(0, 5) == "ITEM_") {
+					// Si el héroe se para exactamente encima (margen de 0.8 bloques)
+					if (std::abs(e->getX() - heroe->getX()) < 0.8f && std::abs(e->getY() - heroe->getY()) < 0.8f) {
+						Item* item = static_cast<Item*>(e);
+						
+						if (item->getTipo() == "ITEM_SABLE") {
+							heroe->equiparSable();
+							item->recoger();
+							std::cout << "¡Has obtenido el Sable Corvo!" << std::endl;
+						} 
+						else if (item->getTipo() == "ITEM_CURACION") {
+							heroe->curar(40.0f); // Cura 40 puntos de vida
+							item->recoger();
+							std::cout << "¡Te has curado!" << std::endl;
+						}
+					}
+				}
+			}
+		}
 		
 		if (heroe && !heroe->estaVivo()) {
 			estadoActual = GAME_OVER;

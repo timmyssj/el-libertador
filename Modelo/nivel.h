@@ -74,6 +74,12 @@ public:
 		// 3. Si está vacía o hay un Aliado/Granadero, ¡vía libre!
 		return true; 
 	}
+	// --- NUEVO: SISTEMA DE CINEMÁTICAS IN-GAME ---
+	std::string mensajeCinematica = "";
+	void setMensajeCinematica(std::string m) { mensajeCinematica = m; }
+	std::string getMensajeCinematica() { return mensajeCinematica; }
+	void limpiarCinematica() { mensajeCinematica = ""; }
+	bool enCinematica() { return mensajeCinematica != ""; }
 };
 
 #endif

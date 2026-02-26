@@ -57,7 +57,6 @@ public:
 	void setMapaEntidades(const std::vector<Entidad*>* mapa) { mapaEntidades = mapa; }
 	
 	bool casillaOcupada(float targetX, float targetY) {
-		// Límites exactos de la matriz (0 a 29 y 0 a 19)
 		if (targetX < 0 || targetX >= 30 || targetY < 0 || targetY >= 20) return true;
 		
 		if (mapaEntidades) {
@@ -65,18 +64,16 @@ public:
 				if (e != this && e->estaVivo()) {
 					if (std::abs(e->getX() - targetX) < 0.1f && std::abs(e->getY() - targetY) < 0.1f) {
 						
-						// --- NUEVO: EL PASE VIP DE SAN MARTÍN ---
-						// 1. Si San Martín choca con sus propias tropas, las ignora (las atraviesa)
-						if (getTipo() == "PROCER" && (e->getTipo() == "ALIADO" || e->getTipo() == "GRANADERO")) {
+						// El pase VIP de San Martín con sus tropas
+						if (getTipo() == "PROCER" && (e->getTipo() == "ALIADO" || e->getTipo() == "GRANADERO")) continue;
+						if ((getTipo() == "ALIADO" || getTipo() == "GRANADERO") && e->getTipo() == "PROCER") continue;
+						
+						// --- NUEVO: LOS ITEMS SE PUEDEN PISAR ---
+						// Si la entidad que estamos tocando es un ítem, lo atravesamos
+						if (e->getTipo().length() >= 5 && e->getTipo().substr(0, 5) == "ITEM_") {
 							continue; 
 						}
 						
-						// 2. Si las tropas chocan con San Martín al intentar apartarse, también lo ignoran
-						if ((getTipo() == "ALIADO" || getTipo() == "GRANADERO") && e->getTipo() == "PROCER") {
-							continue;
-						}
-						
-						// Si no es ninguna de esas excepciones, entonces es un choque real (Ej: Enemigo o Árbol)
 						return true;
 					}
 				}
@@ -104,6 +101,10 @@ public:
 	void recibirDanio(float cantidad) { 
 		vida -= cantidad; 
 		if (vida < 0) vida = 0; 
+	}
+	void curar(float cantidad) { 
+		vida += cantidad; 
+		if (vida > vidaMax) vida = vidaMax; 
 	}
 	
 	void curarCompleto() { vida = vidaMax; }

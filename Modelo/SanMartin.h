@@ -17,9 +17,13 @@ private:
 	// Vectores de ataque (Estandarizados como "atk")
 	std::vector<sf::Texture> atkDerecha, atkIzquierda, atkArriba, atkAbajo; 
 	
+	bool tieneSable;
+	
 public:
 	SanMartin(float x, float y, int traje = 0) : Personaje(x, y, 100, 6) {
 		idTraje = traje;
+		// Si es el traje 0 (Tutorial), no tiene sable. En los demás niveles ya lo trae.
+		tieneSable = (idTraje != 0); 
 		cargarTextura();
 	}
 	
@@ -96,6 +100,8 @@ public:
 			}
 		}
 	}
+	
+	void equiparSable() { tieneSable = true;}
 	
 	void atacar(const std::vector<Entidad*>& mapaEntidades) {
 		float targetX = getX();

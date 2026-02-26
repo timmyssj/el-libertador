@@ -102,13 +102,33 @@ private:
 				Menu* menu = modelo->getMenuNiveles();
 				std::vector<std::string> opciones = menu->getOpciones(); 
 				int desbloqueados = modelo->getNivelMaximo();
+				int opcionActual = menu->getOpcionActual(); 
+				
 				for (size_t i = 0; i < opciones.size(); i++) {
-					sf::Color colorTexto;
+					sf::Color colorTexto = sf::Color::White;
 					std::string texto = opciones[i];
-					if (i == (size_t)menu->getOpcionActual()) colorTexto = sf::Color::Cyan; 
-					else if ((int)i > desbloqueados && i != opciones.size() - 1) { colorTexto = sf::Color(100, 100, 100); texto += " (BLOQUEADO)"; } 
-					else colorTexto = sf::Color::White; 
+					
+					// --- CORRECCIÓN MATEMÁTICA: Usar >= en lugar de > ---
+					bool estaBloqueado = ((int)i >= desbloqueados && i != opciones.size() - 1);
+					
+					if (estaBloqueado) {
+						texto += " (BLOQUEADO)";
+						colorTexto = sf::Color(100, 100, 100); 
+					}
+					
+					if (i == (size_t)opcionActual) {
+						if (estaBloqueado) colorTexto = sf::Color::Red; 
+						else colorTexto = sf::Color::Cyan; 
+					}
+					
 					dibujarTexto(texto, 550, 200 + (i * 50), colorTexto, 20);
+				}
+				
+				// --- CORRECCIÓN EN EL MENSAJE INFERIOR ---
+				if (opcionActual >= desbloqueados && opcionActual != (int)opciones.size() - 1) {
+					dibujarTexto("¡Completa el nivel anterior para desbloquearlo!", 550, 500, sf::Color::Red, 15);
+				} else if (opcionActual != (int)opciones.size() - 1) {
+					dibujarTexto("Presiona ENTER para iniciar", 550, 500, sf::Color::Green, 15);
 				}
 			}
 			else if (estado == INTRO_HISTORIA) {
@@ -118,36 +138,72 @@ private:
 				dibujarTexto("Presiona ENTER para continuar...", 750, 500, sf::Color::Cyan, 15);
 			}
 			else if (estado == JUGANDO) {
-				dibujarJuego();
-				if (modelo->getNivelActual() && modelo->getNivelActual()->getHeroe()) {
-					int vida = modelo->getNivelActual()->getHeroe()->getVida();
-					sf::RectangleShape fondoBarra(sf::Vector2f(200, 20)); 
-					fondoBarra.setPosition(50, 30); fondoBarra.setFillColor(sf::Color(50, 0, 0));
-					fondoBarra.setOutlineThickness(2); fondoBarra.setOutlineColor(sf::Color::White);
-					ventana.draw(fondoBarra);
-					float porcentaje = (float)vida / 100.0f; if (porcentaje < 0) porcentaje = 0;
-					sf::RectangleShape barraActual(sf::Vector2f(200 * porcentaje, 20)); barraActual.setPosition(50, 30);
-					if (vida > 50) barraActual.setFillColor(sf::Color::Green); else if (vida > 25) barraActual.setFillColor(sf::Color::Yellow); else barraActual.setFillColor(sf::Color::Red);
-					ventana.draw(barraActual); dibujarTexto("SAN MARTIN", 150, 40, sf::Color::White, 12);
+				dibujarJuego(); // 1. Dibuja el mapa y personajes (esto ya resetea el zoom dinámico)
+				
+				if (modelo->getNivelActual() != nullptr) {
 					
-					sf::RectangleShape panelInstrucciones(sf::Vector2f(800, 50));
-					panelInstrucciones.setPosition(0, 550); panelInstrucciones.setFillColor(sf::Color(0, 0, 0, 150));
-					ventana.draw(panelInstrucciones);
-					std::string mensaje; sf::Color colorTexto;
-					if (modelo->getNivelActual()->hayEnemigosVivos()) { mensaje = modelo->getNivelActual()->getObjetivo(); colorTexto = sf::Color::White; } 
-					else { mensaje = "¡OBJETIVO CUMPLIDO! Ve a la zona Dorada"; colorTexto = sf::Color::Green; }
-					dibujarTexto(mensaje, 500, 565, colorTexto, 18);
-				}
-				if (modelo->getNivelActual() != nullptr && modelo->getNivelActual()->estaCompletado()) {
-					sf::RectangleShape fondoOscuro(sf::Vector2f(ventana.getSize().x, ventana.getSize().y));
-					fondoOscuro.setFillColor(sf::Color(0, 0, 0, 180)); ventana.draw(fondoOscuro);
-					sf::Text textoVictoria; textoVictoria.setFont(fuente); 
-					textoVictoria.setString("¡VICTORIA!\nHas asegurado la posicion.\n\nPresiona ENTER para continuar.");
-					textoVictoria.setCharacterSize(30); textoVictoria.setFillColor(sf::Color::Yellow);
-					textoVictoria.setOutlineColor(sf::Color::Black); textoVictoria.setOutlineThickness(2);
-					sf::FloatRect bounds = textoVictoria.getLocalBounds();
-					textoVictoria.setPosition((ventana.getSize().x - bounds.width) / 2.0f, (ventana.getSize().y - bounds.height) / 2.0f);
-					ventana.draw(textoVictoria);
+					// 2A. ¿ESTAMOS EN UNA CINEMÁTICA?
+					if (modelo->getNivelActual()->enCinematica()) {
+						sf::RectangleShape fondoOscuro(sf::Vector2f(ventana.getSize().x, ventana.getSize().y));
+						fondoOscuro.setFillColor(sf::Color(0, 0, 0, 220)); 
+						ventana.draw(fondoOscuro);
+						
+						dibujarTexto("MOMENTO HISTORICO", 550, 150, sf::Color::Yellow, 24);
+						// ACHICAMOS LA LETRA A 12 PARA QUE ENTRE PERFECTO
+						dibujarTexto(modelo->getNivelActual()->getMensajeCinematica(), 550, 320, sf::Color::White, 12);
+						dibujarTexto("Presiona ENTER para continuar", 550, 500, sf::Color::Cyan, 12);
+					}
+					// 2B. ¿GANAMOS EL NIVEL?
+					else if (modelo->getNivelActual()->estaCompletado()) {
+						sf::RectangleShape fondoOscuro(sf::Vector2f(ventana.getSize().x, ventana.getSize().y));
+						fondoOscuro.setFillColor(sf::Color(0, 0, 0, 180)); 
+						ventana.draw(fondoOscuro);
+						
+						// --- VICTORIA ÉPICA ---
+						// Título gigante en amarillo (Tamaño 60 como la Derrota)
+						dibujarTexto("¡VICTORIA!", 550, 200, sf::Color::Green, 60);
+						
+						// Subtítulo descriptivo en blanco
+						dibujarTexto("Has asegurado la posicion.", 550, 320, sf::Color::White, 20);
+						
+						// Instrucción para continuar en verde vibrante
+						dibujarTexto("Presiona ENTER para continuar", 550, 450, sf::Color::Cyan, 15);
+					}
+					// 2C. JUEGO NORMAL: DIBUJAR INTERFAZ (HUD)
+					else {
+						// Dibujar la Barra de Vida
+						if (modelo->getNivelActual()->getHeroe()) {
+							int vida = modelo->getNivelActual()->getHeroe()->getVida();
+							sf::RectangleShape fondoBarra(sf::Vector2f(200, 20)); 
+							fondoBarra.setPosition(50, 30); fondoBarra.setFillColor(sf::Color(50, 0, 0));
+							fondoBarra.setOutlineThickness(2); fondoBarra.setOutlineColor(sf::Color::White);
+							ventana.draw(fondoBarra);
+							
+							float porcentaje = (float)vida / 100.0f; if (porcentaje < 0) porcentaje = 0;
+							sf::RectangleShape barraActual(sf::Vector2f(200 * porcentaje, 20)); barraActual.setPosition(50, 30);
+							if (vida > 50) barraActual.setFillColor(sf::Color::Green); 
+							else if (vida > 25) barraActual.setFillColor(sf::Color::Yellow); 
+							else barraActual.setFillColor(sf::Color::Red);
+							
+							ventana.draw(barraActual); 
+							dibujarTexto("SAN MARTIN", 150, 40, sf::Color::White, 12);
+						}
+						
+						// Dibujar la Barra de Objetivo Abajo
+						sf::RectangleShape panelInstrucciones(sf::Vector2f(800, 50));
+						panelInstrucciones.setPosition(0, 550); panelInstrucciones.setFillColor(sf::Color(0, 0, 0, 150));
+						ventana.draw(panelInstrucciones);
+						
+						std::string mensaje; sf::Color colorTexto;
+						if (modelo->getNivelActual()->hayEnemigosVivos()) { 
+							mensaje = modelo->getNivelActual()->getObjetivo(); 
+							colorTexto = sf::Color::White; 
+						} else { 
+							mensaje = "¡OBJETIVO CUMPLIDO! Ve a la zona Dorada"; 
+							colorTexto = sf::Color::Green; 
+						}
+						dibujarTexto(mensaje, 500, 565, colorTexto, 14);
+					}
 				}
 			}
 			else if (estado == PAUSA) {
@@ -243,6 +299,21 @@ private:
 					}
 				}
 			}
+			// --- DIBUJAR LA CINEMÁTICA IN-GAME ---
+			if (modelo->getNivelActual() != nullptr && modelo->getNivelActual()->enCinematica()) {
+				sf::RectangleShape fondoOscuro(sf::Vector2f(ventana.getSize().x, ventana.getSize().y));
+				fondoOscuro.setFillColor(sf::Color(0, 0, 0, 220)); // Pantalla casi negra
+				ventana.draw(fondoOscuro);
+				
+				// Bajamos el tamaño del título de 30 a 24 y lo subimos un poco (Y=150)
+				dibujarTexto("MOMENTO HISTÓRICO", 550, 150, sf::Color::Yellow, 24);
+				
+				// ¡EL CAMBIO CLAVE! Bajamos el texto principal de 20 a 14
+				dibujarTexto(modelo->getNivelActual()->getMensajeCinematica(), 550, 320, sf::Color::White, 14);
+				
+				// El botón de continuar lo dejamos chiquito
+				dibujarTexto("Presiona ENTER para continuar", 550, 500, sf::Color::Cyan, 12);
+			}
 			
 			ventana.setView(ventana.getDefaultView());
 		}
@@ -271,6 +342,14 @@ private:
 				if (e->getTipo() == "OBSTACULO_CONVENTO") {
 					factorEscala = 20.0f; // Escala del edificio (ajusta a gusto)
 				}
+				else if (e->getTipo() == "OBSTACULO_PILAR") {
+					// Ajusta este número: 
+					// 1.5f = tamaño de una persona
+					// 2.3f = tamaño de un árbol grande
+					factorEscala = 5.0f; 
+				}else if (e->getTipo() == "ITEM_SABLE" || e->getTipo() == "ITEM_CURACION") {
+					factorEscala = 1.0f; // Pequeños, tirados en el suelo
+				}
 			}
 			
 			if (spritePtr->getTexture()) {
@@ -296,6 +375,8 @@ private:
 				// --- CORRECCIÓN: El convento no se hunde, queda a ras del suelo ---
 				if (e->getTipo() == "OBSTACULO_CONVENTO") {
 					posY += 20.0f; 
+				}else if (e->getTipo() == "OBSTACULO_PILAR"){
+					posY += 10.0f;
 				}
 			}
 			

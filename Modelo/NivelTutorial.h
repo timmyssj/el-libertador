@@ -3,7 +3,8 @@
 
 #include "Nivel.h"
 #include "Munieco.h"
-#include "Obstaculo.h" // Por si le agregas árboles al tutorial
+#include "Obstaculo.h" 
+#include "Item.h" // <--- NUEVO: Incluimos la clase Item
 #include <fstream>
 #include <iostream>
 
@@ -30,7 +31,7 @@ public:
 	}
 	
 	std::string getObjetivo() override { 
-		return "OBJETIVO: Destruye los maniquies (ESPACIO)"; 
+		return "OBJETIVO: Recoge el sable y destruye los muñecos"; 
 	}
 	
 	void cargarContenido() override {
@@ -54,6 +55,10 @@ public:
 		// --- 3. CREAR ENTIDADES ---
 		setHeroe(new SanMartin(2, 2, 0)); 
 		agregarEntidad(getHeroe());
+		
+		// --- NUEVO: PLANTAMOS EL SABLE ---
+		// Lo ponemos en X=5, Y=2 (A tres pasos a la derecha de donde nace el héroe)
+		agregarEntidad(new Item(5, 2, "SABLE")); 
 		
 		agregarEntidad(new Munieco(10, 3));  
 		agregarEntidad(new Munieco(20, 10)); 
