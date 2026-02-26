@@ -11,7 +11,6 @@ private:
 	SanMartin* lider;
 	int flanco; 
 	std::vector<sf::Texture> animDerecha, animIzquierda, animArriba, animAbajo;
-	// --- NUEVO: Vectores de Ataque ---
 	std::vector<sf::Texture> atkDerecha, atkIzquierda, atkArriba, atkAbajo;
 	int cooldownAtaque;
 	
@@ -35,13 +34,11 @@ public:
 	}
 	
 	void cargarTextura() override {
-		// Caminata
 		cargarSecuencia(animDerecha, "granadero_derecho", 1);
 		cargarSecuencia(animIzquierda, "granadero_izquierdo", 1);
 		cargarSecuencia(animArriba, "granadero_atras", 1);
 		cargarSecuencia(animAbajo, "granadero_frente", 1);
 		
-		// Ataques
 		cargarSecuencia(atkDerecha, "granadero_ataque_derecho", 1);
 		cargarSecuencia(atkIzquierda, "granadero_ataque_izquierdo", 1);
 		cargarSecuencia(atkArriba, "granadero_ataque_atras", 1);
@@ -72,7 +69,6 @@ public:
 			}
 		}
 		
-		// 2. ATACAR SOLO EN DEFENSA PROPIA (Reducido a 1.5f)
 		if (objetivoMasCercano && distMinima <= 1.5f && cooldownAtaque == 0) {
 			Personaje* enemigo = static_cast<Personaje*>(objetivoMasCercano);
 			enemigo->recibirDanio(20.0f);
@@ -80,29 +76,28 @@ public:
 			setTimerAtaque(20); 
 			atacando = true;
 			
+			// --- NUEVO: AVISAR AL MOTOR PARA QUE SUENE EL SABLE ---
+			registrarAtaque();
+			
 			float dx = objetivoMasCercano->getX() - getX();
 			float dy = objetivoMasCercano->getY() - getY();
 			if (std::abs(dx) > std::abs(dy)) setDireccion(dx > 0 ? DERECHA : IZQUIERDA);
 			else setDireccion(dy > 0 ? ABAJO : ARRIBA);
 		}
 		
-		// 3. IA DE ESCOLTA (No persiguen, solo acompañan)
 		if (!atacando) {
 			float destX = getX();
 			float destY = getY();
 			bool debeMoverse = false;
 			
 			if (lider && lider->estaVivo()) {
-				// Formación de V invertida detrás de San Martín
-				// Los de flanco -1 y 1 van un paso atrás. Los de -2 y 2 van dos pasos atrás.
 				float posIdealX = lider->getX() + (flanco * 1.5f); 
-				float posIdealY = lider->getY() + std::abs(flanco); // Siempre Y positivo (Atrás)
+				float posIdealY = lider->getY() + std::abs(flanco); 
 				
 				float dx = posIdealX - getX();
 				float dy = posIdealY - getY();
 				float distAFormacion = std::sqrt(dx*dx + dy*dy);
 				
-				// Si se alejan de su puesto, lo corrigen
 				if (distAFormacion > 1.0f) {
 					destX = posIdealX;
 					destY = posIdealY;
@@ -123,14 +118,13 @@ public:
 				
 				if (std::abs(getX() - oldX) < 0.01f && std::abs(getY() - oldY) < 0.01f && getCooldownMovimiento() == 0) {
 					if (movX != 0) moverse(0, (dy > 0) ? 1 : -1); 
-					else moverse((dx > 0) ? 1 : -1, 0);           
+					else moverse((dx > 0) ? 1 : -1, 0);            
 				}
 			} else {
 				resetearMovimiento(); 
 			}
 		}
 		
-		// --- ANIMACIONES ---
 		if (getTimerAtaque() > 0) {
 			setTimerAtaque(getTimerAtaque() - 1);
 			setOffsetX(0); 

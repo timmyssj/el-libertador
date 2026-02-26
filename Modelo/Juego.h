@@ -5,6 +5,7 @@
 #include "Nivel.h"
 #include <vector>
 #include <string>
+#include <SFML/Audio.hpp>
 
 enum EstadoJuego {
 	EN_MENU,
@@ -39,6 +40,13 @@ private:
 	std::vector<std::string> lineasHistoria;
 	int paginaHistoriaActual;
 	std::string tituloActual;
+	
+	// --- NUEVO: SISTEMA DE AUDIO ---
+	sf::SoundBuffer bufferAtaque;
+	sf::Sound sonidoAtaque;
+	
+	sf::SoundBuffer bufferArenga;
+	sf::Sound sonidoArenga;
 	
 public:
 	Juego();

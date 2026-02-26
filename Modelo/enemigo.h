@@ -9,12 +9,8 @@
 class Enemigo : public Personaje {
 private:
 	SanMartin* heroe; 
-	// Vectores originales de caminata
 	std::vector<sf::Texture> animDerecha, animIzquierda, animArriba, animAbajo;
-	
-	// --- NUEVO: Vectores de Ataque ---
 	std::vector<sf::Texture> atkDerecha, atkIzquierda, atkArriba, atkAbajo;
-	
 	int cooldownAtaque;
 	
 public:
@@ -36,13 +32,11 @@ public:
 	}
 	
 	void cargarTextura() override {
-		// --- Cargar Caminata ---
 		cargarSecuencia(animDerecha, "realista_derecho", 1);
 		cargarSecuencia(animIzquierda, "realista_izquierdo", 1);
 		cargarSecuencia(animArriba, "realista_atras", 1);
 		cargarSecuencia(animAbajo, "realista_frente", 1);
 		
-		// --- NUEVO: Cargar Ataques ---
 		cargarSecuencia(atkDerecha, "realista_ataque_derecho", 1);
 		cargarSecuencia(atkIzquierda, "realista_ataque_izquierdo", 1);
 		cargarSecuencia(atkArriba, "realista_ataque_atras", 1);
@@ -80,10 +74,11 @@ public:
 			Personaje* victima = static_cast<Personaje*>(objetivoMasCercano);
 			victima->recibirDanio(10.0f); 
 			cooldownAtaque = 80; 
-			
-			// --- NUEVO: Dar más tiempo para reproducir la animación completa ---
 			setTimerAtaque(20); 
 			atacando = true;
+			
+			// --- NUEVO: AVISAR AL MOTOR PARA QUE SUENE EL SABLE ---
+			registrarAtaque();
 			
 			float dx = objetivoMasCercano->getX() - getX();
 			float dy = objetivoMasCercano->getY() - getY();
@@ -114,11 +109,8 @@ public:
 			resetearMovimiento();
 		}
 		
-		// --- NUEVO: LÓGICA DE DIBUJADO DE ATAQUE ---
 		if (getTimerAtaque() > 0) {
 			setTimerAtaque(getTimerAtaque() - 1);
-			
-			// Detenemos el desplazamiento artificial. Ahora el sprite hace el trabajo visual.
 			setOffsetX(0); 
 			setOffsetY(0); 
 			

@@ -73,6 +73,9 @@ public:
 			setTimerAtaque(20); // Animación extendida
 			atacando = true;
 			
+			// --- NUEVO: AVISAR AL MOTOR PARA QUE SUENE EL SABLE ---
+			registrarAtaque();
+			
 			float dx = objetivoMasCercano->getX() - getX();
 			float dy = objetivoMasCercano->getY() - getY();
 			if (std::abs(dx) > std::abs(dy)) setDireccion(dx > 0 ? DERECHA : IZQUIERDA);

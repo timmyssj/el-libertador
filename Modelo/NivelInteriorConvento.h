@@ -35,14 +35,19 @@ public:
 			inicializarMapaVacio();
 		}
 		
-		// Héroe (Aparece abajo, mirando hacia arriba, como si acabara de entrar)
-		setHeroe(new SanMartin(15, 17, 2)); 
+		// Nace el Héroe en la puerta
+		setHeroe(new SanMartin(15, 18, 2)); 
 		agregarEntidad(getHeroe()); 
 		
-		// Enemigos atrincherados
-		agregarEntidad(new Enemigo(10, 8, getHeroe()));
-		agregarEntidad(new Enemigo(20, 8, getHeroe()));
-		agregarEntidad(new Enemigo(15, 5, getHeroe()));
+		// --- FORMACIÓN ENEMIGA: BARRICADA INTERIOR ---
+		// Los realistas se encierran en un semicírculo cerca del centro
+		agregarEntidad(new Enemigo(13, 12, getHeroe()));
+		agregarEntidad(new Enemigo(15, 13, getHeroe()));
+		agregarEntidad(new Enemigo(17, 12, getHeroe()));
+		
+		// Guardias de élite bloqueando el objetivo final (Fondo)
+		agregarEntidad(new Enemigo(14, 5, getHeroe()));
+		agregarEntidad(new Enemigo(16, 5, getHeroe()));
 		
 		// Cargar los obstáculos (Muros internos o pilares que pusimos en el nivel3.dat)
 		for (int y = 0; y < 20; y++) {

@@ -28,6 +28,14 @@ Juego::Juego() {
 	actualizarTextosConfig(); 
 	
 	nivelActual = nullptr;
+	
+	// CARGAR AUDIOS (Asegúrate de que la ruta y el nombre coincidan con tus archivos)
+	if (bufferAtaque.loadFromFile("sonidos/espadazo.wav")) {
+		sonidoAtaque.setBuffer(bufferAtaque);
+	}
+	if (bufferArenga.loadFromFile("sonidos/seamos_libres.wav")) {
+		sonidoArenga.setBuffer(bufferArenga);
+	}
 }
 
 Juego::~Juego() {
@@ -201,8 +209,19 @@ void Juego::procesarTeclaEnter() {
 	}
 	else if (estadoActual == INTRO_HISTORIA) {
 		paginaHistoriaActual++;
+		
+		// Si ya no hay más páginas de historia...
 		if (paginaHistoriaActual >= (int)lineasHistoria.size()) {
-			estadoActual = JUGANDO;
+			
+			// ¡EMPIEZA LA BATALLA!
+			estadoActual = JUGANDO; 
+			
+			// --- NUEVO: GRITO DE GUERRA EN SAN LORENZO ---
+			// El nivelJugandoId == 2 es San Lorenzo.
+			if (nivelJugandoId == 2) {
+				sonidoArenga.setVolume(80.0f); // Volumen alto para la arenga
+				sonidoArenga.play();
+			}
 		}
 	}
 	else if (estadoActual == PAUSA) {
@@ -269,26 +288,45 @@ void Juego::actualizar() {
 		// --- LA MAGIA DEL TELETRANSPORTE ---
 		if (nivelActual->estaCompletado() && nivelJugandoId == 2) {
 			delete nivelActual;
-			nivelActual = new NivelInteriorConvento(); // Cargamos el interior
+			nivelActual = new NivelInteriorConvento(); 
 			nivelJugandoId = 3; 
-			prepararNivel(nivelActual); // Muestra los diálogos de historia del nuevo nivel
-			return; // Cortamos aquí para que no salte la victoria
+			prepararNivel(nivelActual); 
+			return; 
 		}
 		
-		// Comportamiento normal para los demás niveles (Muestra Victoria)
 		if (nivelActual->estaCompletado()) return; 
 		
 		SanMartin* heroe = nivelActual->getHeroe();
 		if (heroe) heroe->resetearMovimiento();
 		
+		// --- 1. ACTUALIZAR EL NIVEL ---
+		// (¡AQUÍ es donde las tropas se mueven y Cabral vigila la vida de San Martín!)
 		nivelActual->actualizar();
 		
-		// --- NUEVO: SISTEMA DE RECOLECCIÓN DE ITEMS ---
+		// --- 2. ESCUCHAR ATAQUES PARA EL SONIDO ---
+		bool alguienAtacoEsteFrame = false;
+		
+		for (Entidad* e : nivelActual->getEntidades()) {
+			if (e->estaVivo()) {
+				// Ya no llamamos a e->actualizar() aquí porque el nivel ya lo hizo arriba.
+				// Solo le preguntamos si tiró un golpe.
+				Personaje* p = dynamic_cast<Personaje*>(e);
+				if (p && p->reportarAtaque()) {
+					alguienAtacoEsteFrame = true;
+				}
+			}
+		}
+		
+		// Si alguien atacó (y el sonido no se está reproduciendo ya)
+		if (alguienAtacoEsteFrame && sonidoAtaque.getStatus() != sf::Sound::Playing) {
+			sonidoAtaque.setVolume(volumenSonidos * 0.7f); // Un poco más bajo para no aturdir
+			sonidoAtaque.play();
+		}
+		
+		// --- 3. SISTEMA DE RECOLECCIÓN DE ITEMS ---
 		if (heroe && heroe->estaVivo()) {
 			for (Entidad* e : nivelActual->getEntidades()) {
-				// Si la entidad es un ITEM y está viva (no ha sido recogida)
 				if (e->estaVivo() && e->getTipo().substr(0, 5) == "ITEM_") {
-					// Si el héroe se para exactamente encima (margen de 0.8 bloques)
 					if (std::abs(e->getX() - heroe->getX()) < 0.8f && std::abs(e->getY() - heroe->getY()) < 0.8f) {
 						Item* item = static_cast<Item*>(e);
 						
@@ -298,7 +336,7 @@ void Juego::actualizar() {
 							std::cout << "¡Has obtenido el Sable Corvo!" << std::endl;
 						} 
 						else if (item->getTipo() == "ITEM_CURACION") {
-							heroe->curar(40.0f); // Cura 40 puntos de vida
+							heroe->curar(40.0f);
 							item->recoger();
 							std::cout << "¡Te has curado!" << std::endl;
 						}
@@ -320,6 +358,7 @@ void Juego::atacarConSanMartin() {
 	SanMartin* heroe = nivelActual->getHeroe();
 	if (!heroe) return;
 	
+	// Solo mandamos la orden de atacar. El sonido ahora es automático.
 	heroe->atacar(nivelActual->getEntidades());
 }
 

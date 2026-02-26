@@ -29,6 +29,8 @@ private: // --- ¡VOLVEMOS A LA PUREZA DEL ENCAPSULAMIENTO! ---
 	
 	const std::vector<Entidad*>* mapaEntidades; 
 	
+	bool hizoAtaque;
+	
 public:
 	Personaje(float x, float y, float vida, int delayPasos = 8) 
 		: Entidad(x, y), vida(vida), vidaMax(vida) {
@@ -45,6 +47,8 @@ public:
 		offsetX = 0.0f;
 		offsetY = 0.0f;
 		mapaEntidades = nullptr;
+		
+		hizoAtaque = false;
 	}
 	
 	virtual ~Personaje() {}
@@ -158,6 +162,20 @@ public:
 	void setDireccion(Direccion nuevaDireccion) { direccionActual = nuevaDireccion; }
 	
 	virtual void cargarTextura() = 0; 
+	
+	// Función para encender el aviso
+	void registrarAtaque() { 
+		hizoAtaque = true; 
+	}
+	
+	// Función para que el juego escuche y apague el aviso
+	bool reportarAtaque() {
+		if (hizoAtaque) {
+			hizoAtaque = false; 
+			return true;
+		}
+		return false;
+	}
 };
 
 #endif

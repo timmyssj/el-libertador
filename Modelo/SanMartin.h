@@ -102,8 +102,12 @@ public:
 	}
 	
 	void equiparSable() { tieneSable = true;}
+	bool tieneSableEquipado(){ return tieneSable;}
 	
 	void atacar(const std::vector<Entidad*>& mapaEntidades) {
+		// --- NUEVO: Si no tiene el sable equipado, bloqueamos el ataque ---
+		if (!tieneSable) return; 
+		
 		float targetX = getX();
 		float targetY = getY();
 		
@@ -131,6 +135,8 @@ public:
 			}
 		}
 		
+		// --- NUEVO: LE AVISAMOS AL MOTOR QUE TIRAMOS UN SABLAZO PARA EL SONIDO ---
+		registrarAtaque();
 		setTimerAtaque(12); 
 	}
 	

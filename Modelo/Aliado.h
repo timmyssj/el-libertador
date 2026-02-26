@@ -9,8 +9,8 @@
 class Aliado : public Personaje {
 private:
 	SanMartin* lider;
-	int fX; // Distancia horizontal a mantener respecto al líder
-	int fY; // Distancia vertical a mantener respecto al líder
+	int fX; 
+	int fY; 
 	std::vector<sf::Texture> animDerecha;
 	std::vector<sf::Texture> animIzquierda;
 	std::vector<sf::Texture> animArriba;
@@ -18,7 +18,6 @@ private:
 	int cooldownAtaque;
 	
 public:
-	// Velocidad 4 para marchar en bloque
 	Aliado(float x, float y, SanMartin* heroe, int flancoX, int flancoY) : Personaje(x, y, 100, 4) { 
 		lider = heroe;
 		fX = flancoX;
@@ -57,7 +56,6 @@ public:
 		Entidad* objetivoMasCercano = nullptr;
 		float distMinima = 9999.0f;
 		
-		// 1. RADAR DE ENEMIGOS
 		if (getMapaEntidades() != nullptr) {
 			for (Entidad* e : *getMapaEntidades()) {
 				if (e->getTipo() == "FRANCES" && e->estaVivo()) {
@@ -69,7 +67,6 @@ public:
 			}
 		}
 		
-		// 2. ATACAR SOLO EN DEFENSA PROPIA (1.5f)
 		if (objetivoMasCercano && distMinima <= 1.5f && cooldownAtaque == 0) {
 			Personaje* enemigo = static_cast<Personaje*>(objetivoMasCercano);
 			enemigo->recibirDanio(15.0f);
@@ -77,13 +74,15 @@ public:
 			setTimerAtaque(20); 
 			atacando = true;
 			
+			// --- NUEVO: AVISAR AL MOTOR PARA QUE SUENE EL SABLE ---
+			registrarAtaque();
+			
 			float dx = objetivoMasCercano->getX() - getX();
 			float dy = objetivoMasCercano->getY() - getY();
 			if (std::abs(dx) > std::abs(dy)) setDireccion(dx > 0 ? DERECHA : IZQUIERDA);
 			else setDireccion(dy > 0 ? ABAJO : ARRIBA);
 		}
 		
-		// 3. IA DE FORMACIÓN ESTRICTA (Sin iniciativa propia)
 		if (!atacando) {
 			float destX = getX();
 			float destY = getY();
@@ -115,17 +114,15 @@ public:
 				float oldX = getX(); float oldY = getY();
 				moverse(movX, movY); 
 				
-				// Sistema de Deslizamiento
 				if (std::abs(getX() - oldX) < 0.01f && std::abs(getY() - oldY) < 0.01f && getCooldownMovimiento() == 0) {
 					if (movX != 0) moverse(0, (dy > 0) ? 1 : -1); 
-					else moverse((dx > 0) ? 1 : -1, 0);           
+					else moverse((dx > 0) ? 1 : -1, 0);            
 				}
 			} else {
 				resetearMovimiento(); 
 			}
 		}
 		
-		// 4. ANIMACIONES
 		if (getTimerAtaque() > 0) {
 			setTimerAtaque(getTimerAtaque() - 1);
 			float desplazamiento = (getTimerAtaque() > 6) ? 0.4f : 0.0f; 

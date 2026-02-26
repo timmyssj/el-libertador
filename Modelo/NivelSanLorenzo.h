@@ -65,27 +65,34 @@ public:
 			}
 		}
 		
-		// --- 1. Nace el Héroe ---
-		setHeroe(new SanMartin(15, 17, 2)); 
-		agregarEntidad(getHeroe()); 
-		// --- Nace Cabral ---
-		sargentoCabral = new Cabral(16, 15, getHeroe());
+		// --- FORMACIÓN ALIADA: ESCOLTA EN "V" ---
+		setHeroe(new SanMartin(15, 15, 2)); 
+		agregarEntidad(getHeroe());
+		
+		sargentoCabral = new Cabral(15, 16, getHeroe());
 		agregarEntidad(sargentoCabral);
 		
-		// --- 2. Nacen los Granaderos en Formación de Pinza ---
-		// Le pasamos -1 (Izquierda), 1 (Derecha), -2 (Extremo Izquierdo), 2 (Extremo Derecho)
-		agregarEntidad(new Granadero(13, 17, getHeroe(), -1));
-		agregarEntidad(new Granadero(17, 17, getHeroe(), 1));
-		agregarEntidad(new Granadero(11, 18, getHeroe(), -2));
-		agregarEntidad(new Granadero(19, 18, getHeroe(), 2));
+		// Escuadrón de 8 Granaderos (Extendiendo la "V" hacia atrás y los lados)
+		agregarEntidad(new Granadero(14, 16, getHeroe(), -1)); // Izquierda 1
+		agregarEntidad(new Granadero(16, 16, getHeroe(),  1)); // Derecha 1
 		
-		// --- 3. Nace el Ejército Realista (Reemplazando a los Franceses) ---
-		// Nota: Asegúrate de que el constructor de Enemigo reciba (x, y, heroe)
-		agregarEntidad(new Enemigo(10, 5, getHeroe()));
-		agregarEntidad(new Enemigo(15, 4, getHeroe()));
-		agregarEntidad(new Enemigo(20, 5, getHeroe()));
-		agregarEntidad(new Enemigo(12, 3, getHeroe()));
-		agregarEntidad(new Enemigo(18, 3, getHeroe()));
+		agregarEntidad(new Granadero(12, 17, getHeroe(), -2)); // Izquierda 2
+		agregarEntidad(new Granadero(18, 17, getHeroe(),  2)); // Derecha 2
+		
+		agregarEntidad(new Granadero(10, 18, getHeroe(), -3)); // Izquierda 3
+		agregarEntidad(new Granadero(20, 18, getHeroe(),  3)); // Derecha 3
+		
+		agregarEntidad(new Granadero(8,  19, getHeroe(), -4)); // Izquierda 4
+		agregarEntidad(new Granadero(22, 19, getHeroe(),  4)); // Derecha 4
+		
+		// --- FORMACIÓN ENEMIGA: LÍNEA DE DEFENSA REALISTA ---
+		// Una barrera horizontal bloqueando el acceso al convento (Fila 7)
+		for (int x = 8; x <= 22; x += 2) { // Un realista cada 2 bloques
+			agregarEntidad(new Enemigo(x, 7, getHeroe()));
+		}
+		// Dos capitanes realistas custodiando las puertas del convento (Fila 5)
+		agregarEntidad(new Enemigo(14, 5, getHeroe()));
+		agregarEntidad(new Enemigo(16, 5, getHeroe()));
 		
 		// Nace el Convento (x=15 es el centro, y=4 es arriba)
 		agregarEntidad(new Obstaculo(15, 4, "CONVENTO"));
