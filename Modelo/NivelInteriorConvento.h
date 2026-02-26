@@ -5,6 +5,7 @@
 #include "Obstaculo.h"
 #include "enemigo.h"
 #include "SanMartin.h"
+#include "Monje.h"
 #include <fstream>  
 
 class NivelInteriorConvento : public Nivel {
@@ -12,7 +13,7 @@ public:
 	NivelInteriorConvento() {
 		setCompletado(false); 
 		// Si tienes una textura de suelo de madera/piedra ponla aquí, sino usa el pasto:
-		setArchivoFondo("fondos/pasto.png"); 
+		setArchivoFondo("fondos/suelo_convento.png"); 
 		
 		setTituloIntro("INTERIOR DEL CONVENTO");
 		addTextoIntro("Los realistas han tomado el claustro.");
@@ -48,6 +49,13 @@ public:
 		// Guardias de élite bloqueando el objetivo final (Fondo)
 		agregarEntidad(new Enemigo(14, 5, getHeroe()));
 		agregarEntidad(new Enemigo(16, 5, getHeroe()));
+		
+		// --- NUEVO: AÑADIR MONJES FRANCISCANOS ---
+		// Esparcidos por los costados y el fondo del convento
+		agregarEntidad(new Monje(8, 10));  // Monje asustado a la izquierda
+		agregarEntidad(new Monje(22, 11)); // Monje asustado a la derecha
+		agregarEntidad(new Monje(10, 6));  // Monje cerca del fondo
+		agregarEntidad(new Monje(20, 7));  // Otro por el fondo
 		
 		// Cargar los obstáculos (Muros internos o pilares que pusimos en el nivel3.dat)
 		for (int y = 0; y < 20; y++) {

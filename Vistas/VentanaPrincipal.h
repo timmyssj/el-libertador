@@ -346,7 +346,7 @@ private:
 					// Ajusta este número: 
 					// 1.5f = tamaño de una persona
 					// 2.3f = tamaño de un árbol grande
-					factorEscala = 5.0f; 
+					factorEscala = 10.0f; 
 				}else if (e->getTipo() == "ITEM_SABLE" || e->getTipo() == "ITEM_CURACION") {
 					factorEscala = 1.0f; // Pequeños, tirados en el suelo
 				}
