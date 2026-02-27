@@ -83,10 +83,12 @@ void Juego::procesarTeclaArriba() {
 		
 		SanMartin* heroe = nivelActual->getHeroe();
 		if (heroe) {
+			// --- NUEVO: SIEMPRE gira al presionar la tecla ---
+			heroe->setDireccion(ARRIBA); 
+			
 			int tx = (int)heroe->getX();
 			int ty = (int)heroe->getY() - 1; 
 			
-			// Usamos la nueva colisión inteligente
 			if (nivelActual->esCeldaLibreParaHeroe(tx, ty)) {
 				heroe->moverse(0, -1);
 			}
@@ -103,6 +105,9 @@ void Juego::procesarTeclaAbajo() {
 		if (nivelActual->estaCompletado()) return;
 		SanMartin* heroe = nivelActual->getHeroe();
 		if (heroe) {
+			// --- NUEVO: SIEMPRE gira al presionar la tecla ---
+			heroe->setDireccion(ABAJO);
+			
 			int tx = (int)heroe->getX();
 			int ty = (int)heroe->getY() + 1; 
 			
@@ -124,6 +129,9 @@ void Juego::procesarTeclaIzquierda() {
 		if (nivelActual->estaCompletado()) return;
 		SanMartin* heroe = nivelActual->getHeroe();
 		if (heroe) {
+			// --- NUEVO: SIEMPRE gira al presionar la tecla ---
+			heroe->setDireccion(IZQUIERDA);
+			
 			int tx = (int)heroe->getX() - 1;
 			int ty = (int)heroe->getY(); 
 			
@@ -145,6 +153,9 @@ void Juego::procesarTeclaDerecha() {
 		if (nivelActual->estaCompletado()) return;
 		SanMartin* heroe = nivelActual->getHeroe();
 		if (heroe) {
+			// --- NUEVO: SIEMPRE gira al presionar la tecla ---
+			heroe->setDireccion(DERECHA);
+			
 			int tx = (int)heroe->getX() + 1;
 			int ty = (int)heroe->getY(); 
 			
