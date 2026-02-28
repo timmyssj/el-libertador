@@ -10,7 +10,6 @@ class Frances : public Personaje {
 private:
 	SanMartin* heroe; 
 	std::vector<sf::Texture> animDerecha, animIzquierda, animArriba, animAbajo;
-	// --- NUEVO: Vectores de Ataque ---
 	std::vector<sf::Texture> atkDerecha, atkIzquierda, atkArriba, atkAbajo;
 	int cooldownAtaque;
 	
@@ -33,13 +32,11 @@ public:
 	}
 	
 	void cargarTextura() override {
-		// Caminata
 		cargarSecuencia(animDerecha, "frances_derecho", 1);
 		cargarSecuencia(animIzquierda, "frances_izquierdo", 1);
 		cargarSecuencia(animArriba, "frances_atras", 1);
 		cargarSecuencia(animAbajo, "frances_frente", 1);
 		
-		// Ataques
 		cargarSecuencia(atkDerecha, "frances_ataque_derecho", 1);
 		cargarSecuencia(atkIzquierda, "frances_ataque_izquierdo", 1);
 		cargarSecuencia(atkArriba, "frances_ataque_atras", 1);
@@ -52,54 +49,89 @@ public:
 		if (cooldownAtaque > 0) cooldownAtaque--;
 		bool atacando = false;
 		
-		Entidad* objetivoMasCercano = nullptr;
-		float distMinima = 9999.0f;
+		Entidad* mejorObjetivo = nullptr;
+		float mejorPuntaje = 9999.0f;
+		float distFisicaAlMejor = 9999.0f;
 		
+		// --- SISTEMA DE PUNTUACIÓN DE COMBATE (1v1 Orgánico) ---
 		if (getMapaEntidades() != nullptr) {
 			for (Entidad* e : *getMapaEntidades()) {
 				if ((e->getTipo() == "PROCER" || e->getTipo() == "ALIADO") && e->estaVivo()) {
+					
 					float dx = e->getX() - getX();
 					float dy = e->getY() - getY();
-					float dist = std::sqrt(dx*dx + dy*dy);
-					if (dist < distMinima) { distMinima = dist; objetivoMasCercano = e; }
+					float distReal = std::sqrt(dx*dx + dy*dy);
+					
+					if (distReal <= 8.0f) { 
+						
+						// Preguntamos: ¿Cuántos FRANCESES están pegados a este objetivo?
+						int colegasPeleando = 0;
+						for (Entidad* comp : *getMapaEntidades()) {
+							if (comp->getTipo() == "FRANCES" && comp != this && comp->estaVivo()) {
+								float cdx = e->getX() - comp->getX();
+								float cdy = e->getY() - comp->getY();
+								if (std::sqrt(cdx*cdx + cdy*cdy) <= 1.8f) { 
+									colegasPeleando++;
+								}
+							}
+						}
+						
+						// Penalización por amontonamiento
+						float puntaje = distReal + (colegasPeleando * 10.0f);
+						
+						if (puntaje < mejorPuntaje) {
+							mejorPuntaje = puntaje;
+							mejorObjetivo = e;
+							distFisicaAlMejor = distReal;
+						}
+					}
 				}
 			}
 		}
 		
-		if (objetivoMasCercano && distMinima <= 1.5f && cooldownAtaque == 0) {
-			Personaje* victima = static_cast<Personaje*>(objetivoMasCercano);
-			victima->recibirDanio(10.0f); 
-			cooldownAtaque = 80; 
-			setTimerAtaque(20); // Animación extendida
-			atacando = true;
-			
-			// --- NUEVO: AVISAR AL MOTOR PARA QUE SUENE EL SABLE ---
-			registrarAtaque();
-			
-			float dx = objetivoMasCercano->getX() - getX();
-			float dy = objetivoMasCercano->getY() - getY();
-			if (std::abs(dx) > std::abs(dy)) setDireccion(dx > 0 ? DERECHA : IZQUIERDA);
-			else setDireccion(dy > 0 ? ABAJO : ARRIBA);
+		// Respaldo
+		if (!mejorObjetivo && heroe && heroe->estaVivo()) {
+			mejorObjetivo = heroe;
+			float dx = heroe->getX() - getX();
+			float dy = heroe->getY() - getY();
+			distFisicaAlMejor = std::sqrt(dx*dx + dy*dy);
 		}
 		
-		if (!atacando && objetivoMasCercano) {
-			if (distMinima <= 8.0f && distMinima > 1.2f) { 
-				float dx = objetivoMasCercano->getX() - getX();
-				float dy = objetivoMasCercano->getY() - getY();
-				float movX = 0, movY = 0;
+		// --- ACTUAR SOBRE EL MEJOR OBJETIVO DEL MOMENTO ---
+		if (mejorObjetivo && distFisicaAlMejor <= 8.0f) {
+			float dx = mejorObjetivo->getX() - getX();
+			float dy = mejorObjetivo->getY() - getY();
+			
+			// A. ATACAR
+			if (distFisicaAlMejor <= 1.5f && cooldownAtaque == 0) {
+				Personaje* victima = static_cast<Personaje*>(mejorObjetivo);
+				victima->recibirDanio(10.0f); 
+				cooldownAtaque = 80; 
+				setTimerAtaque(20); 
+				atacando = true;
+				registrarAtaque();
 				
-				if (std::abs(dx) > std::abs(dy)) movX = (dx > 0) ? 1 : -1;
-				else movY = (dy > 0) ? 1 : -1;
-				
-				float oldX = getX(); float oldY = getY();
-				moverse(movX, movY);
-				
-				if (std::abs(getX() - oldX) < 0.01f && std::abs(getY() - oldY) < 0.01f && getCooldownMovimiento() == 0) {
-					if (movX != 0) moverse(0, (dy > 0) ? 1 : -1); 
-					else moverse((dx > 0) ? 1 : -1, 0); 
+				if (std::abs(dx) > std::abs(dy)) setDireccion(dx > 0 ? DERECHA : IZQUIERDA);
+				else setDireccion(dy > 0 ? ABAJO : ARRIBA);
+			}
+			
+			// B. PERSEGUIR
+			if (!atacando) {
+				if (distFisicaAlMejor > 1.2f) { 
+					float movX = 0, movY = 0;
+					if (std::abs(dx) > std::abs(dy)) movX = (dx > 0) ? 1 : -1;
+					else movY = (dy > 0) ? 1 : -1;
+					
+					float oldX = getX(); float oldY = getY();
+					moverse(movX, movY);
+					
+					if (std::abs(getX() - oldX) < 0.01f && std::abs(getY() - oldY) < 0.01f && getCooldownMovimiento() == 0) {
+						if (movX != 0) moverse(0, (dy > 0) ? 1 : -1); 
+						else moverse((dx > 0) ? 1 : -1, 0); 
+					}
+				} else {
+					resetearMovimiento();
 				}
-			} else {
-				resetearMovimiento();
 			}
 		} else {
 			resetearMovimiento();
@@ -108,8 +140,7 @@ public:
 		// --- ANIMACIONES ---
 		if (getTimerAtaque() > 0) {
 			setTimerAtaque(getTimerAtaque() - 1);
-			setOffsetX(0); 
-			setOffsetY(0); 
+			setOffsetX(0); setOffsetY(0); 
 			switch (getDireccion()) {
 			case DERECHA: reproducirAnimacion(atkDerecha.empty() ? animDerecha : atkDerecha); break;
 			case IZQUIERDA: reproducirAnimacion(atkIzquierda.empty() ? animIzquierda : atkIzquierda); break;

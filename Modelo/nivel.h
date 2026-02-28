@@ -80,6 +80,10 @@ public:
 	std::string getMensajeCinematica() { return mensajeCinematica; }
 	void limpiarCinematica() { mensajeCinematica = ""; }
 	bool enCinematica() { return mensajeCinematica != ""; }
+	
+	// --- NUEVO: RELOJ DEL HUD ---
+	// Devuelve -1 si el nivel es normal. Los niveles con tiempo (como Andes) la sobrescribirán.
+	virtual int getTiempoRestante() { return -1; }
 };
 
 #endif

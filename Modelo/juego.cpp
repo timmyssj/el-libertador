@@ -22,7 +22,7 @@ Juego::Juego() {
 	nivelMaximoDesbloqueado = 0; 
 	nivelJugandoId = 0; 
 	
-	menuNiveles = new Menu({"1. BATALLA EN ESPAÑA", "2. BATALLA DE SAN LORENZO", "VOLVER"});
+	menuNiveles = new Menu({"1. BATALLA EN ESPAÑA", "2. BATALLA DE SAN LORENZO","3. CRUCE DE LOS ANDES", "VOLVER"});
 	
 	menuConfig = new Menu({"Musica", "Sonidos", "Volver"}); 
 	actualizarTextosConfig(); 
@@ -35,6 +35,18 @@ Juego::Juego() {
 	}
 	if (bufferArenga.loadFromFile("sonidos/seamos_libres.wav")) {
 		sonidoArenga.setBuffer(bufferArenga);
+	}
+	
+	if (fuenteHUD.loadFromFile("fuentes/tu_fuente.ttf")) { 
+		textoTiempo.setFont(fuenteHUD);
+		textoTiempo.setCharacterSize(35); // Tamaño grande y visible
+		
+		// Centrado en la parte superior para una resolución de 821px de ancho
+		textoTiempo.setPosition((821.0f / 2.0f) - 60.0f, 15.0f); 
+		
+		// Un borde negro para que el texto resalte sobre la nieve blanca
+		textoTiempo.setOutlineColor(sf::Color::Black);
+		textoTiempo.setOutlineThickness(3.0f);
 	}
 }
 
@@ -347,7 +359,7 @@ void Juego::actualizar() {
 							std::cout << "¡Has obtenido el Sable Corvo!" << std::endl;
 						} 
 						else if (item->getTipo() == "ITEM_CURACION") {
-							heroe->curar(40.0f);
+							heroe->curar(20.0f);
 							item->recoger();
 							std::cout << "¡Te has curado!" << std::endl;
 						}

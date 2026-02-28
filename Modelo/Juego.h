@@ -48,6 +48,9 @@ private:
 	sf::SoundBuffer bufferArenga;
 	sf::Sound sonidoArenga;
 	
+	sf::Font fuenteHUD;
+	sf::Text textoTiempo;
+	
 public:
 	Juego();
 	~Juego();
