@@ -189,6 +189,19 @@ private:
 							dibujarTexto("SAN MARTIN", 150, 40, sf::Color::White, 12);
 						}
 						
+						// --- NUEVO: DIBUJAR EL RELOJ DEL NIVEL (SI LO TIENE) ---
+						int tiempo = modelo->getNivelActual()->getTiempoRestante();
+						if (tiempo != -1) {
+							// Elegimos el color: Blanco normal, Rojo si quedan 30s o menos
+							sf::Color colorReloj = (tiempo <= 30) ? sf::Color::Red : sf::Color::White;
+							
+							std::string textoReloj = "TIEMPO: " + std::to_string(tiempo);
+							
+							// Lo dibujamos arriba al medio (X: 550, Y: 40) tamaño 20
+							dibujarTexto(textoReloj, 550, 40, colorReloj, 20);
+						}
+						// --------------------------------------------------------
+						
 						// Dibujar la Barra de Objetivo Abajo
 						sf::RectangleShape panelInstrucciones(sf::Vector2f(800, 50));
 						panelInstrucciones.setPosition(0, 550); panelInstrucciones.setFillColor(sf::Color(0, 0, 0, 150));
@@ -317,7 +330,7 @@ private:
 			
 			ventana.setView(ventana.getDefaultView());
 		}
-			
+		
 		// --- NUEVA FUNCIÓN PRIVADA PARA DIBUJAR UNA SOLA ENTIDAD ---
 		void dibujarEntidadUnica(Entidad* e, float bloqueX, float bloqueY) {
 			sf::Sprite* spritePtr = e->getSpriteRender();
