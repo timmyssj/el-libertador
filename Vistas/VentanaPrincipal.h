@@ -20,6 +20,9 @@ private:
 	sf::Texture texSuelo;
 	sf::Texture texPared;
 	
+	sf::Texture texRocaNieve;
+	sf::Sprite spriteRocaNieve;
+	
 	sf::Texture texturaFondoMenu;
 	sf::Sprite spriteFondoMenu;
 	
@@ -37,6 +40,12 @@ public:
 		fondoActualCargado = ""; 
 		
 		if (!fuente.loadFromFile("PressStart2P.ttf")) { }
+		
+		if (!texRocaNieve.loadFromFile("sprites/roca_nieve.png")) {
+			std::cout << "Error: No se pudo cargar sprites/roca_nieve.png" << std::endl;
+		} else {
+			spriteRocaNieve.setTexture(texRocaNieve);
+		}
 		
 		if (!texturaFondoMenu.loadFromFile("fondos/pantalla1.png")) {
 			std::cout << "Error: No se pudo cargar la imagen de fondo del menu." << std::endl;
@@ -63,9 +72,7 @@ private:
 		void procesarEventos() {
 			sf::Event evento;
 			while (ventana.pollEvent(evento)) {
-				if (evento.type == sf::Event::Closed)
-					ventana.close();
-				
+				if (evento.type == sf::Event::Closed) ventana.close();
 				if (evento.type == sf::Event::KeyPressed) {
 					switch (evento.key.code) {
 					case sf::Keyboard::W: case sf::Keyboard::Up:    modelo->procesarTeclaArriba(); break;
@@ -83,9 +90,7 @@ private:
 		
 		void actualizar() {
 			modelo->actualizar();
-			if (modelo->getEstado() == SALIR) {
-				ventana.close();
-			}
+			if (modelo->getEstado() == SALIR) ventana.close();
 		}
 		
 		void renderizar() {
@@ -107,24 +112,14 @@ private:
 				for (size_t i = 0; i < opciones.size(); i++) {
 					sf::Color colorTexto = sf::Color::White;
 					std::string texto = opciones[i];
-					
-					// --- CORRECCIÓN MATEMÁTICA: Usar >= en lugar de > ---
 					bool estaBloqueado = ((int)i >= desbloqueados && i != opciones.size() - 1);
 					
-					if (estaBloqueado) {
-						texto += " (BLOQUEADO)";
-						colorTexto = sf::Color(100, 100, 100); 
-					}
-					
-					if (i == (size_t)opcionActual) {
-						if (estaBloqueado) colorTexto = sf::Color::Red; 
-						else colorTexto = sf::Color::Cyan; 
-					}
+					if (estaBloqueado) { texto += " (BLOQUEADO)"; colorTexto = sf::Color(100, 100, 100); }
+					if (i == (size_t)opcionActual) { colorTexto = estaBloqueado ? sf::Color::Red : sf::Color::Cyan; }
 					
 					dibujarTexto(texto, 550, 200 + (i * 50), colorTexto, 20);
 				}
 				
-				// --- CORRECCIÓN EN EL MENSAJE INFERIOR ---
 				if (opcionActual >= desbloqueados && opcionActual != (int)opciones.size() - 1) {
 					dibujarTexto("¡Completa el nivel anterior para desbloquearlo!", 550, 500, sf::Color::Red, 15);
 				} else if (opcionActual != (int)opciones.size() - 1) {
@@ -138,40 +133,26 @@ private:
 				dibujarTexto("Presiona ENTER para continuar...", 750, 500, sf::Color::Cyan, 15);
 			}
 			else if (estado == JUGANDO) {
-				dibujarJuego(); // 1. Dibuja el mapa y personajes (esto ya resetea el zoom dinámico)
+				dibujarJuego(); 
 				
 				if (modelo->getNivelActual() != nullptr) {
-					
-					// 2A. ¿ESTAMOS EN UNA CINEMÁTICA?
 					if (modelo->getNivelActual()->enCinematica()) {
 						sf::RectangleShape fondoOscuro(sf::Vector2f(ventana.getSize().x, ventana.getSize().y));
 						fondoOscuro.setFillColor(sf::Color(0, 0, 0, 220)); 
 						ventana.draw(fondoOscuro);
-						
 						dibujarTexto("MOMENTO HISTORICO", 550, 150, sf::Color::Yellow, 24);
-						// ACHICAMOS LA LETRA A 12 PARA QUE ENTRE PERFECTO
 						dibujarTexto(modelo->getNivelActual()->getMensajeCinematica(), 550, 320, sf::Color::White, 12);
 						dibujarTexto("Presiona ENTER para continuar", 550, 500, sf::Color::Cyan, 12);
 					}
-					// 2B. ¿GANAMOS EL NIVEL?
 					else if (modelo->getNivelActual()->estaCompletado()) {
 						sf::RectangleShape fondoOscuro(sf::Vector2f(ventana.getSize().x, ventana.getSize().y));
 						fondoOscuro.setFillColor(sf::Color(0, 0, 0, 180)); 
 						ventana.draw(fondoOscuro);
-						
-						// --- VICTORIA ÉPICA ---
-						// Título gigante en amarillo (Tamaño 60 como la Derrota)
 						dibujarTexto("¡VICTORIA!", 550, 200, sf::Color::Green, 60);
-						
-						// Subtítulo descriptivo en blanco
 						dibujarTexto("Has asegurado la posicion.", 550, 320, sf::Color::White, 20);
-						
-						// Instrucción para continuar en verde vibrante
 						dibujarTexto("Presiona ENTER para continuar", 550, 450, sf::Color::Cyan, 15);
 					}
-					// 2C. JUEGO NORMAL: DIBUJAR INTERFAZ (HUD)
 					else {
-						// Dibujar la Barra de Vida
 						if (modelo->getNivelActual()->getHeroe()) {
 							int vida = modelo->getNivelActual()->getHeroe()->getVida();
 							sf::RectangleShape fondoBarra(sf::Vector2f(200, 20)); 
@@ -189,20 +170,6 @@ private:
 							dibujarTexto("SAN MARTIN", 150, 40, sf::Color::White, 12);
 						}
 						
-						// --- NUEVO: DIBUJAR EL RELOJ DEL NIVEL (SI LO TIENE) ---
-						int tiempo = modelo->getNivelActual()->getTiempoRestante();
-						if (tiempo != -1) {
-							// Elegimos el color: Blanco normal, Rojo si quedan 30s o menos
-							sf::Color colorReloj = (tiempo <= 30) ? sf::Color::Red : sf::Color::White;
-							
-							std::string textoReloj = "TIEMPO: " + std::to_string(tiempo);
-							
-							// Lo dibujamos arriba al medio (X: 550, Y: 40) tamaño 20
-							dibujarTexto(textoReloj, 550, 40, colorReloj, 20);
-						}
-						// --------------------------------------------------------
-						
-						// Dibujar la Barra de Objetivo Abajo
 						sf::RectangleShape panelInstrucciones(sf::Vector2f(800, 50));
 						panelInstrucciones.setPosition(0, 550); panelInstrucciones.setFillColor(sf::Color(0, 0, 0, 150));
 						ventana.draw(panelInstrucciones);
@@ -233,8 +200,6 @@ private:
 			}
 			ventana.display(); 
 		}
-		
-		// --- FUNCIONES AYUDANTES ---
 		
 		void dibujarJuego() {
 			float anchoVentana = (float)ventana.getDefaultView().getSize().x;
@@ -273,65 +238,79 @@ private:
 			
 			for (int i = 0; i < 20; i++) {       
 				for (int j = 0; j < 30; j++) {   
-					sf::RectangleShape celda(sf::Vector2f(bloqueX, bloqueY)); celda.setPosition(j * bloqueX, i * bloqueY);
 					int contenido = 0; if (modelo->getNivelActual()) contenido = modelo->getNivelActual()->getContenidoCelda(j, i);
-					if (contenido == 1) { celda.setFillColor(sf::Color(100, 100, 100)); celda.setOutlineColor(sf::Color(40, 40, 40)); } 
-					else if (contenido == 4) { celda.setFillColor(sf::Color(255, 215, 0, 100)); celda.setOutlineColor(sf::Color(40, 40, 40)); } 
-					else {
-						if (fondoActualCargado != "" && fondoActualCargado != "ERROR") { celda.setFillColor(sf::Color::Transparent); celda.setOutlineColor(sf::Color(255, 255, 255, 20)); } 
-						else { celda.setFillColor(sf::Color(50, 50, 50)); celda.setOutlineColor(sf::Color(40, 40, 40)); }
-					}
-					celda.setOutlineThickness(1); ventana.draw(celda);
+					
+					// Dibujamos solo la salida dorada, el resto de la grilla se oculta para lucir el fondo
+					if (contenido == 4) { 
+						sf::RectangleShape celda(sf::Vector2f(bloqueX, bloqueY)); celda.setPosition(j * bloqueX, i * bloqueY);
+						celda.setFillColor(sf::Color(255, 215, 0, 100)); 
+						celda.setOutlineColor(sf::Color(40, 40, 40)); 
+						celda.setOutlineThickness(1); ventana.draw(celda);
+					} 
 				}
 			}
 			
-			// --- 3. DIBUJAR PERSONAJES Y OBJETOS 3D (SISTEMA DE DOS PASADAS) ---
 			if (modelo->getNivelActual()) {
 				const std::vector<Entidad*>& entidades = modelo->getNivelActual()->getEntidades();
 				
 				for (int fila = 0; fila < 20; fila++) {
-					
-					// PASADA 1: Dibujar Personajes "planos" (San Martín, Enemigos)
+					// PASADA 1: Planos
 					for (Entidad* e : entidades) {
 						if (!e->estaVivo()) continue;
-						if ((int)e->getY() == fila) {
-							if (e->getTipo() != "ARBOL" && e->getTipo() != "ROCA") {
-								dibujarEntidadUnica(e, bloqueX, bloqueY);
-							}
+						if ((int)e->getY() == fila && e->getTipo() != "ARBOL" && e->getTipo() != "OBSTACULO_CONVENTO") {
+							dibujarEntidadUnica(e, bloqueX, bloqueY);
 						}
 					}
 					
-					// PASADA 2: Dibujar Obstáculos altos ENCIMA de los personajes
+					// PASADA 2: Obstáculos Altos
 					for (Entidad* e : entidades) {
 						if (!e->estaVivo()) continue;
-						if ((int)e->getY() == fila) {
-							if (e->getTipo() == "ARBOL" || e->getTipo() == "ROCA" || e->getTipo() == "OBSTACULO_CONVENTO") {
-								dibujarEntidadUnica(e, bloqueX, bloqueY);
+						if ((int)e->getY() == fila && (e->getTipo() == "ARBOL" || e->getTipo() == "OBSTACULO_CONVENTO")) {
+							dibujarEntidadUnica(e, bloqueX, bloqueY);
+						}
+					}
+					
+					// PASADA 3: Dibujar Rocas
+					for (int col = 0; col < 30; col++) {
+						if (modelo->getNivelActual()->getContenidoCelda(col, fila) == 5) {
+							if (texRocaNieve.getSize().x > 0) {
+								float factorEscala = 2.3f; 
+								float escalaX = (bloqueX / texRocaNieve.getSize().x) * factorEscala;
+								float escalaY = (bloqueY / texRocaNieve.getSize().y) * factorEscala;
+								spriteRocaNieve.setScale(escalaX, escalaY);
+								
+								float anchoSprite = spriteRocaNieve.getGlobalBounds().width;
+								float altoSprite = spriteRocaNieve.getGlobalBounds().height;
+								
+								float posX = (col * bloqueX) + (bloqueX / 2) - (anchoSprite / 2);
+								float posY = (fila * bloqueY) + bloqueY - altoSprite + 10.0f; 
+								
+								sf::CircleShape sombra(bloqueX * 0.35f); 
+								sombra.setFillColor(sf::Color(0, 0, 0, 120)); 
+								sombra.setScale(1.0f, 0.4f); 
+								sombra.setPosition((col * bloqueX) + (bloqueX / 2) - sombra.getGlobalBounds().width / 2, (fila * bloqueY) + bloqueY - sombra.getGlobalBounds().height);
+								ventana.draw(sombra);
+								
+								spriteRocaNieve.setPosition(posX, posY);
+								ventana.draw(spriteRocaNieve);
 							}
 						}
 					}
 				}
 			}
-			// --- DIBUJAR LA CINEMÁTICA IN-GAME ---
+			
 			if (modelo->getNivelActual() != nullptr && modelo->getNivelActual()->enCinematica()) {
 				sf::RectangleShape fondoOscuro(sf::Vector2f(ventana.getSize().x, ventana.getSize().y));
-				fondoOscuro.setFillColor(sf::Color(0, 0, 0, 220)); // Pantalla casi negra
+				fondoOscuro.setFillColor(sf::Color(0, 0, 0, 220)); 
 				ventana.draw(fondoOscuro);
-				
-				// Bajamos el tamaño del título de 30 a 24 y lo subimos un poco (Y=150)
 				dibujarTexto("MOMENTO HISTÓRICO", 550, 150, sf::Color::Yellow, 24);
-				
-				// ¡EL CAMBIO CLAVE! Bajamos el texto principal de 20 a 14
 				dibujarTexto(modelo->getNivelActual()->getMensajeCinematica(), 550, 320, sf::Color::White, 14);
-				
-				// El botón de continuar lo dejamos chiquito
 				dibujarTexto("Presiona ENTER para continuar", 550, 500, sf::Color::Cyan, 12);
 			}
 			
 			ventana.setView(ventana.getDefaultView());
 		}
 		
-		// --- NUEVA FUNCIÓN PRIVADA PARA DIBUJAR UNA SOLA ENTIDAD ---
 		void dibujarEntidadUnica(Entidad* e, float bloqueX, float bloqueY) {
 			sf::Sprite* spritePtr = e->getSpriteRender();
 			if (!spritePtr) return;
@@ -344,25 +323,14 @@ private:
 			sombra.setPosition(sombraX, sombraY);
 			ventana.draw(sombra);
 			
-			// --- CORRECCIÓN INFALIBLE: ESCALA DINÁMICA ---
 			Personaje* p = dynamic_cast<Personaje*>(e);
 			float factorEscala = 1.5f; 
 			
 			if (p == nullptr) {
-				factorEscala = 2.3f; // Árboles y rocas
-				
-				// --- NUEVO: Detectar el nombre correcto para hacerlo GIGANTE ---
-				if (e->getTipo() == "OBSTACULO_CONVENTO") {
-					factorEscala = 20.0f; // Escala del edificio (ajusta a gusto)
-				}
-				else if (e->getTipo() == "OBSTACULO_PILAR") {
-					// Ajusta este número: 
-					// 1.5f = tamaño de una persona
-					// 2.3f = tamaño de un árbol grande
-					factorEscala = 10.0f; 
-				}else if (e->getTipo() == "ITEM_SABLE" || e->getTipo() == "ITEM_CURACION") {
-					factorEscala = 1.0f; // Pequeños, tirados en el suelo
-				}
+				factorEscala = 2.3f; 
+				if (e->getTipo() == "OBSTACULO_CONVENTO") factorEscala = 20.0f; 
+				else if (e->getTipo() == "OBSTACULO_PILAR") factorEscala = 10.0f; 
+				else if (e->getTipo() == "ITEM_SABLE" || e->getTipo() == "ITEM_CURACION") factorEscala = 1.0f; 
 			}
 			
 			if (spritePtr->getTexture()) {
@@ -383,20 +351,14 @@ private:
 				if (e->getTipo() == "PROCER") posY += 0.0f; 
 				else posY += 3.0f; 
 			} else {
-				posY += 10.0f; // Hunde un poco los árboles
-				
-				// --- CORRECCIÓN: El convento no se hunde, queda a ras del suelo ---
-				if (e->getTipo() == "OBSTACULO_CONVENTO") {
-					posY += 20.0f; 
-				}else if (e->getTipo() == "OBSTACULO_PILAR"){
-					posY += 10.0f;
-				}
+				posY += 10.0f; 
+				if (e->getTipo() == "OBSTACULO_CONVENTO") posY += 20.0f; 
+				else if (e->getTipo() == "OBSTACULO_PILAR") posY += 10.0f;
 			}
 			
 			spritePtr->setPosition(posX, posY);
 			ventana.draw(*spritePtr);
 			
-			// Barras de vida (solo si es personaje y no es San Martín)
 			if (p && e->getTipo() != "PROCER") {
 				float anchoBarra = bloqueX * 0.8f; float altoBarra = 6.0f;            
 				float porcentajeVida = p->getVida() / p->getVidaMax();

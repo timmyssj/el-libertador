@@ -60,7 +60,7 @@ public:
 		int celda = getContenidoCelda(x, y);
 		
 		// 1. Si hay un muro, árbol o roca, no puede pasar
-		if (celda == 1 || celda == 2 || celda == 3) return false; 
+		if (celda == 1 || celda == 2 || celda == 3 || celda == 5) return false; 
 		
 		// 2. Si hay un enemigo, bloquea el paso (Los enemigos son sólidos)
 		for (Entidad* e : entidades) {

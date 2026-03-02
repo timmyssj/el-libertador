@@ -35,21 +35,17 @@ private:
 	Nivel* nivelActual;
 	
 	int nivelMaximoDesbloqueado;
-	int nivelJugandoId; // <--- NUEVO: Rastreará el índice numérico del nivel
+	int nivelJugandoId; 
 	
 	std::vector<std::string> lineasHistoria;
 	int paginaHistoriaActual;
 	std::string tituloActual;
 	
-	// --- NUEVO: SISTEMA DE AUDIO ---
 	sf::SoundBuffer bufferAtaque;
 	sf::Sound sonidoAtaque;
 	
 	sf::SoundBuffer bufferArenga;
 	sf::Sound sonidoArenga;
-	
-	sf::Font fuenteHUD;
-	sf::Text textoTiempo;
 	
 public:
 	Juego();

@@ -65,25 +65,27 @@ public:
 			}
 		}
 		
-		// --- FORMACIÓN ALIADA: ESCOLTA EN "V" ---
-		setHeroe(new SanMartin(15, 15, 2)); 
+		// --- FORMACIÓN ALIADA (DESPLAZADA HACIA ARRIBA) ---
+		// Movimos a San Martín del Y=15 al Y=10
+		setHeroe(new SanMartin(15, 10, 2)); 
 		agregarEntidad(getHeroe());
 		
-		sargentoCabral = new Cabral(15, 16, getHeroe());
+		// Cabral y el resto del escuadrón también suben 5 bloques
+		sargentoCabral = new Cabral(15, 11, getHeroe());
 		agregarEntidad(sargentoCabral);
 		
-		// Escuadrón de 8 Granaderos (Extendiendo la "V" hacia atrás y los lados)
-		agregarEntidad(new Granadero(14, 16, getHeroe(), -1)); // Izquierda 1
-		agregarEntidad(new Granadero(16, 16, getHeroe(),  1)); // Derecha 1
+		agregarEntidad(new Granadero(14, 11, getHeroe(), -1)); 
+		agregarEntidad(new Granadero(16, 11, getHeroe(),  1)); 
 		
-		agregarEntidad(new Granadero(12, 17, getHeroe(), -2)); // Izquierda 2
-		agregarEntidad(new Granadero(18, 17, getHeroe(),  2)); // Derecha 2
+		agregarEntidad(new Granadero(12, 12, getHeroe(), -2)); 
+		agregarEntidad(new Granadero(18, 12, getHeroe(),  2)); 
 		
-		agregarEntidad(new Granadero(10, 18, getHeroe(), -3)); // Izquierda 3
-		agregarEntidad(new Granadero(20, 18, getHeroe(),  3)); // Derecha 3
+		agregarEntidad(new Granadero(10, 13, getHeroe(), -3)); 
+		agregarEntidad(new Granadero(20, 13, getHeroe(),  3)); 
 		
-		agregarEntidad(new Granadero(8,  19, getHeroe(), -4)); // Izquierda 4
-		agregarEntidad(new Granadero(22, 19, getHeroe(),  4)); // Derecha 4
+		// Ahora los últimos nacen en Y=14, muy lejos de la barricada de abajo
+		agregarEntidad(new Granadero(8,  14, getHeroe(), -4)); 
+		agregarEntidad(new Granadero(22, 14, getHeroe(),  4));
 		
 		// --- FORMACIÓN ENEMIGA: LÍNEA DE DEFENSA REALISTA ---
 		// Una barrera horizontal bloqueando el acceso al convento (Fila 7)

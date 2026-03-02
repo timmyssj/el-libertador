@@ -4,6 +4,7 @@
 #include "NivelEspana.h"
 #include "NivelSanLorenzo.h"
 #include "NivelInteriorConvento.h"
+#include "NivelAndes.h" // Incluimos el nivel
 #include "Item.h"
 #include <iostream>
 #include <cmath>
@@ -29,24 +30,11 @@ Juego::Juego() {
 	
 	nivelActual = nullptr;
 	
-	// CARGAR AUDIOS (Asegúrate de que la ruta y el nombre coincidan con tus archivos)
 	if (bufferAtaque.loadFromFile("sonidos/espadazo.wav")) {
 		sonidoAtaque.setBuffer(bufferAtaque);
 	}
 	if (bufferArenga.loadFromFile("sonidos/seamos_libres.wav")) {
 		sonidoArenga.setBuffer(bufferArenga);
-	}
-	
-	if (fuenteHUD.loadFromFile("fuentes/tu_fuente.ttf")) { 
-		textoTiempo.setFont(fuenteHUD);
-		textoTiempo.setCharacterSize(35); // Tamaño grande y visible
-		
-		// Centrado en la parte superior para una resolución de 821px de ancho
-		textoTiempo.setPosition((821.0f / 2.0f) - 60.0f, 15.0f); 
-		
-		// Un borde negro para que el texto resalte sobre la nieve blanca
-		textoTiempo.setOutlineColor(sf::Color::Black);
-		textoTiempo.setOutlineThickness(3.0f);
 	}
 }
 
@@ -95,15 +83,10 @@ void Juego::procesarTeclaArriba() {
 		
 		SanMartin* heroe = nivelActual->getHeroe();
 		if (heroe) {
-			// --- NUEVO: SIEMPRE gira al presionar la tecla ---
 			heroe->setDireccion(ARRIBA); 
-			
 			int tx = (int)heroe->getX();
 			int ty = (int)heroe->getY() - 1; 
-			
-			if (nivelActual->esCeldaLibreParaHeroe(tx, ty)) {
-				heroe->moverse(0, -1);
-			}
+			if (nivelActual->esCeldaLibreParaHeroe(tx, ty)) heroe->moverse(0, -1);
 		}
 	}
 }
@@ -117,15 +100,10 @@ void Juego::procesarTeclaAbajo() {
 		if (nivelActual->estaCompletado()) return;
 		SanMartin* heroe = nivelActual->getHeroe();
 		if (heroe) {
-			// --- NUEVO: SIEMPRE gira al presionar la tecla ---
 			heroe->setDireccion(ABAJO);
-			
 			int tx = (int)heroe->getX();
 			int ty = (int)heroe->getY() + 1; 
-			
-			if (nivelActual->esCeldaLibreParaHeroe(tx, ty)) {
-				heroe->moverse(0, 1);
-			}
+			if (nivelActual->esCeldaLibreParaHeroe(tx, ty)) heroe->moverse(0, 1);
 		}
 	}
 }
@@ -141,15 +119,10 @@ void Juego::procesarTeclaIzquierda() {
 		if (nivelActual->estaCompletado()) return;
 		SanMartin* heroe = nivelActual->getHeroe();
 		if (heroe) {
-			// --- NUEVO: SIEMPRE gira al presionar la tecla ---
 			heroe->setDireccion(IZQUIERDA);
-			
 			int tx = (int)heroe->getX() - 1;
 			int ty = (int)heroe->getY(); 
-			
-			if (nivelActual->esCeldaLibreParaHeroe(tx, ty)) {
-				heroe->moverse(-1, 0);
-			}
+			if (nivelActual->esCeldaLibreParaHeroe(tx, ty)) heroe->moverse(-1, 0);
 		}
 	}
 }
@@ -165,15 +138,10 @@ void Juego::procesarTeclaDerecha() {
 		if (nivelActual->estaCompletado()) return;
 		SanMartin* heroe = nivelActual->getHeroe();
 		if (heroe) {
-			// --- NUEVO: SIEMPRE gira al presionar la tecla ---
 			heroe->setDireccion(DERECHA);
-			
 			int tx = (int)heroe->getX() + 1;
 			int ty = (int)heroe->getY(); 
-			
-			if (nivelActual->esCeldaLibreParaHeroe(tx, ty)) {
-				heroe->moverse(1, 0);
-			}
+			if (nivelActual->esCeldaLibreParaHeroe(tx, ty)) heroe->moverse(1, 0);
 		}
 	}
 }
@@ -181,15 +149,12 @@ void Juego::procesarTeclaDerecha() {
 void Juego::procesarTeclaEnter() {
 	if (estadoActual == EN_MENU) {
 		int op = menuPrincipal->getOpcionActual();
-		if (op == 0) { // NUEVA PARTIDA
+		if (op == 0) { 
 			nivelMaximoDesbloqueado = 0; 
 			guardarProgreso(); 
-			
-			// --- NUEVO: Va directo al tutorial sin pasar por Selección de Nivel ---
 			if (nivelActual) delete nivelActual;
 			nivelActual = new NivelTutorial();
-			nivelJugandoId = 0; // El tutorial es el ID 0
-			
+			nivelJugandoId = 0; 
 			prepararNivel(nivelActual);
 		}
 		else if (op == 1) { 
@@ -216,15 +181,20 @@ void Juego::procesarTeclaEnter() {
 		int nivelRealId = op + 1; 
 		
 		if (nivelRealId <= nivelMaximoDesbloqueado) {
-			if (nivelActual) delete nivelActual;
+			if (nivelActual) { delete nivelActual; nivelActual = nullptr; }
 			
 			if (nivelRealId == 1) nivelActual = new NivelEspana(); 
-			// --- NUEVO: CARGAR SAN LORENZO ---
-			if (nivelRealId == 2) nivelActual = new NivelSanLorenzo(); 
+			else if (nivelRealId == 2) nivelActual = new NivelSanLorenzo(); 
+			else if (nivelRealId == 3) nivelActual = new NivelAndes(); 
+			else if (nivelRealId == 4) nivelActual = new NivelAndes(); 
 			
-			nivelJugandoId = nivelRealId; 
-			
-			prepararNivel(nivelActual);
+			if (nivelActual != nullptr) {
+				nivelJugandoId = nivelRealId; 
+				prepararNivel(nivelActual);
+			} else {
+				std::cout << "Error Crítico: No se pudo instanciar el nivel." << std::endl;
+				estadoActual = EN_MENU;
+			}
 			
 		} else {
 			std::cout << "Nivel Bloqueado!" << std::endl;
@@ -233,16 +203,10 @@ void Juego::procesarTeclaEnter() {
 	else if (estadoActual == INTRO_HISTORIA) {
 		paginaHistoriaActual++;
 		
-		// Si ya no hay más páginas de historia...
 		if (paginaHistoriaActual >= (int)lineasHistoria.size()) {
-			
-			// ¡EMPIEZA LA BATALLA!
 			estadoActual = JUGANDO; 
-			
-			// --- NUEVO: GRITO DE GUERRA EN SAN LORENZO ---
-			// El nivelJugandoId == 2 es San Lorenzo.
 			if (nivelJugandoId == 2) {
-				sonidoArenga.setVolume(80.0f); // Volumen alto para la arenga
+				sonidoArenga.setVolume(80.0f); 
 				sonidoArenga.play();
 			}
 		}
@@ -308,7 +272,6 @@ void Juego::teclaEscape() {
 void Juego::actualizar() {
 	if (estadoActual == JUGANDO && nivelActual != nullptr) {
 		
-		// --- LA MAGIA DEL TELETRANSPORTE ---
 		if (nivelActual->estaCompletado() && nivelJugandoId == 2) {
 			delete nivelActual;
 			nivelActual = new NivelInteriorConvento(); 
@@ -322,17 +285,12 @@ void Juego::actualizar() {
 		SanMartin* heroe = nivelActual->getHeroe();
 		if (heroe) heroe->resetearMovimiento();
 		
-		// --- 1. ACTUALIZAR EL NIVEL ---
-		// (¡AQUÍ es donde las tropas se mueven y Cabral vigila la vida de San Martín!)
 		nivelActual->actualizar();
 		
-		// --- 2. ESCUCHAR ATAQUES PARA EL SONIDO ---
 		bool alguienAtacoEsteFrame = false;
 		
 		for (Entidad* e : nivelActual->getEntidades()) {
 			if (e->estaVivo()) {
-				// Ya no llamamos a e->actualizar() aquí porque el nivel ya lo hizo arriba.
-				// Solo le preguntamos si tiró un golpe.
 				Personaje* p = dynamic_cast<Personaje*>(e);
 				if (p && p->reportarAtaque()) {
 					alguienAtacoEsteFrame = true;
@@ -340,13 +298,11 @@ void Juego::actualizar() {
 			}
 		}
 		
-		// Si alguien atacó (y el sonido no se está reproduciendo ya)
 		if (alguienAtacoEsteFrame && sonidoAtaque.getStatus() != sf::Sound::Playing) {
-			sonidoAtaque.setVolume(volumenSonidos * 0.7f); // Un poco más bajo para no aturdir
+			sonidoAtaque.setVolume(volumenSonidos * 0.7f); 
 			sonidoAtaque.play();
 		}
 		
-		// --- 3. SISTEMA DE RECOLECCIÓN DE ITEMS ---
 		if (heroe && heroe->estaVivo()) {
 			for (Entidad* e : nivelActual->getEntidades()) {
 				if (e->estaVivo() && e->getTipo().substr(0, 5) == "ITEM_") {
@@ -381,7 +337,6 @@ void Juego::atacarConSanMartin() {
 	SanMartin* heroe = nivelActual->getHeroe();
 	if (!heroe) return;
 	
-	// Solo mandamos la orden de atacar. El sonido ahora es automático.
 	heroe->atacar(nivelActual->getEntidades());
 }
 
