@@ -170,6 +170,14 @@ private:
 							dibujarTexto("SAN MARTIN", 150, 40, sf::Color::White, 12);
 						}
 						
+						int tiempo = modelo->getNivelActual()->getTiempoRestante();
+						if (tiempo != -1) {
+							sf::Color colorReloj = (tiempo <= 30) ? sf::Color::Red : sf::Color::White;
+							dibujarTexto("TIEMPO: " + std::to_string(tiempo), 550, 40, colorReloj, 20);
+							int curas = modelo->getNivelActual()->getCurasRestantes();
+							dibujarTexto("CURAS: " + std::to_string(curas) + "/4", 900, 40, sf::Color::Cyan, 16);
+						}
+						
 						sf::RectangleShape panelInstrucciones(sf::Vector2f(800, 50));
 						panelInstrucciones.setPosition(0, 550); panelInstrucciones.setFillColor(sf::Color(0, 0, 0, 150));
 						ventana.draw(panelInstrucciones);
@@ -240,7 +248,7 @@ private:
 				for (int j = 0; j < 30; j++) {   
 					int contenido = 0; if (modelo->getNivelActual()) contenido = modelo->getNivelActual()->getContenidoCelda(j, i);
 					
-					// Dibujamos solo la salida dorada, el resto de la grilla se oculta para lucir el fondo
+					// Dibujamos solo la salida dorada
 					if (contenido == 4) { 
 						sf::RectangleShape celda(sf::Vector2f(bloqueX, bloqueY)); celda.setPosition(j * bloqueX, i * bloqueY);
 						celda.setFillColor(sf::Color(255, 215, 0, 100)); 
@@ -270,7 +278,7 @@ private:
 						}
 					}
 					
-					// PASADA 3: Dibujar Rocas
+					// PASADA 3: Dibujar Rocas Nevadas (5)
 					for (int col = 0; col < 30; col++) {
 						if (modelo->getNivelActual()->getContenidoCelda(col, fila) == 5) {
 							if (texRocaNieve.getSize().x > 0) {
@@ -330,7 +338,8 @@ private:
 				factorEscala = 2.3f; 
 				if (e->getTipo() == "OBSTACULO_CONVENTO") factorEscala = 20.0f; 
 				else if (e->getTipo() == "OBSTACULO_PILAR") factorEscala = 10.0f; 
-				else if (e->getTipo() == "ITEM_SABLE" || e->getTipo() == "ITEM_CURACION") factorEscala = 1.0f; 
+				else if (e->getTipo() == "ITEM_SABLE") factorEscala = 1.0f; 
+				else if (e->getTipo() == "ITEM_CURACION") factorEscala = 0.5f;
 			}
 			
 			if (spritePtr->getTexture()) {

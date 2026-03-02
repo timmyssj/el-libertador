@@ -4,7 +4,7 @@
 #include "NivelEspana.h"
 #include "NivelSanLorenzo.h"
 #include "NivelInteriorConvento.h"
-#include "NivelAndes.h" // Incluimos el nivel
+#include "NivelAndes.h" 
 #include "Item.h"
 #include <iostream>
 #include <cmath>
@@ -303,21 +303,32 @@ void Juego::actualizar() {
 			sonidoAtaque.play();
 		}
 		
+		// --- 3. SISTEMA DE RECOLECCIÓN DE ITEMS ---
 		if (heroe && heroe->estaVivo()) {
 			for (Entidad* e : nivelActual->getEntidades()) {
-				if (e->estaVivo() && e->getTipo().substr(0, 5) == "ITEM_") {
-					if (std::abs(e->getX() - heroe->getX()) < 0.8f && std::abs(e->getY() - heroe->getY()) < 0.8f) {
-						Item* item = static_cast<Item*>(e);
+				
+				// Chequeamos que esté vivo y sea una cura o sable
+				if (e->estaVivo() && (e->getTipo() == "ITEM_CURACION" || e->getTipo() == "ITEM_SABLE")) {
+					
+					// Calculamos distancia real (Hitbox generosa de 1.2 bloques)
+					float dx = e->getX() - heroe->getX();
+					float dy = e->getY() - heroe->getY();
+					float distancia = std::sqrt(dx*dx + dy*dy);
+					
+					if (distancia <= 1.2f) { 
+						Item* item = dynamic_cast<Item*>(e);
 						
-						if (item->getTipo() == "ITEM_SABLE") {
-							heroe->equiparSable();
-							item->recoger();
-							std::cout << "¡Has obtenido el Sable Corvo!" << std::endl;
-						} 
-						else if (item->getTipo() == "ITEM_CURACION") {
-							heroe->curar(20.0f);
-							item->recoger();
-							std::cout << "¡Te has curado!" << std::endl;
+						if (item) {
+							if (item->getTipo() == "ITEM_SABLE") {
+								heroe->equiparSable();
+								item->recoger();
+								std::cout << "[SISTEMA] Sable Corvo obtenido." << std::endl;
+							} 
+							else if (item->getTipo() == "ITEM_CURACION") {
+								heroe->curar(10.0f); // Sube 10 de vida
+								item->recoger();     // Desaparece del mapa
+								std::cout << "[SISTEMA] ¡Cura agarrada! Vida: " << heroe->getVida() << std::endl;
+							}
 						}
 					}
 				}

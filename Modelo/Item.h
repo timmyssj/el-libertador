@@ -2,38 +2,56 @@
 #define ITEM_H
 
 #include "Entidad.h"
-#include <SFML/Graphics.hpp>
 #include <string>
+#include <SFML/Graphics.hpp>
 
 class Item : public Entidad {
 private:
-	sf::Sprite sprite;
 	sf::Texture textura;
-	std::string tipoItem;
-	bool recogido;
+	sf::Sprite sprite;
+	std::string tipoItem; // Variable propia para guardar qué ítem es
+	bool activo;          // Variable propia para saber si sigue en el piso
 	
 public:
-	Item(float x, float y, std::string tipo) : Entidad(x, y), tipoItem(tipo) {
-		recogido = false;
+	// Le pasamos la X y la Y directamente al constructor del padre (Entidad)
+	Item(float startX, float startY, std::string t) : Entidad(startX, startY) {
+		this->tipoItem = t;
+		this->activo = true;
 		
-		if (tipo == "SABLE") {
+		// --- CARGA DE TEXTURAS ---
+		if (this->tipoItem == "ITEM_SABLE") {
 			textura.loadFromFile("sprites/sable.png"); 
-		} else if (tipo == "CURACION") {
-			textura.loadFromFile("sprites/curacion.png"); // Puede ser un botiquín o un mate
+			sprite.setTexture(textura);
 		}
-		sprite.setTexture(textura, true);
+		else if (this->tipoItem == "ITEM_CURACION") {
+			// RECUERDA: Pon aquí el nombre exacto de tu imagen .png
+			textura.loadFromFile("sprites/curas.png"); 
+			sprite.setTexture(textura);
+		}
 	}
 	
-	std::string getTipo() override { return "ITEM_" + tipoItem; }
+	// Le respondemos al motor qué tipo de ítem somos
+	std::string getTipo() override { 
+		return tipoItem; 
+	}
 	
-	void actualizar() override {} // Un item tirado no hace nada
+	// Le respondemos al motor si seguimos vivos/en el mapa
+	bool estaVivo() override {
+		return activo;
+	}
 	
-	sf::Sprite* getSpriteRender() override { return &sprite; }
+	void actualizar() override { 
+		// Los items estáticos no hacen nada en su actualización
+	}
 	
-	// Si ya lo recogimos, lo marcamos como "muerto" para que el juego deje de dibujarlo
-	bool estaVivo() override { return !recogido; }
+	sf::Sprite* getSpriteRender() override {
+		return &sprite;
+	}
 	
-	void recoger() { recogido = true; }
+	// Función para que desaparezca cuando San Martín lo toca
+	void recoger() {
+		this->activo = false; 
+	}
 };
 
 #endif

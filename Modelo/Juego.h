@@ -78,6 +78,7 @@ public:
 	std::string getTextoHistoria() { return lineasHistoria[paginaHistoriaActual]; }
 	bool esUltimaPaginaIntro() { return paginaHistoriaActual == (int)lineasHistoria.size() - 1; }
 	std::string getTituloActual() { return tituloActual; }
+	
 };
 
 #endif

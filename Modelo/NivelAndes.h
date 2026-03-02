@@ -3,63 +3,76 @@
 
 #include "Nivel.h"
 #include "SanMartin.h"
-#include "Item.h" // ¡Ahora incluimos las curas!
+#include "Item.h"
 #include <fstream>
 #include <iostream>
 
 class NivelAndes : public Nivel {
+private:
+	int framesFrio;
+	int tiempoRestante;
+	
 public:
 	NivelAndes() {
 		setCompletado(false);
 		setArchivoFondo("fondos/andes.png"); 
+		framesFrio = 0;
+		tiempoRestante = 140; 
 		
 		setTituloIntro("EL CRUCE DE LOS ANDES");
-		addTextoIntro("Prueba de nivel basico.");
-		addTextoIntro("Solo debes poder moverte por la nieve y agarrar curas.");
+		addTextoIntro("El frio extremo congela la sangre y agota las fuerzas.");
+		addTextoIntro("Tienes 140 segundos antes de morir de hipotermia.");
+		addTextoIntro("La vida baja constantemente. Desviate del camino principal");
+		addTextoIntro("para encontrar suministros (+10 de vida).");
+		addTextoIntro("Encuentra la salida a Chile.");
 		
 		cargarContenido();
 	}
 	
 	void cargarContenido() override {
-		// 1. LEER EL MAPA DIRECTAMENTE
 		std::ifstream archivoEntrada("nivel4.dat", std::ios::binary);
-		
 		if (archivoEntrada.is_open()) {
 			archivoEntrada.read(reinterpret_cast<char*>(getMapaPointer()), getMapaSize());
 			archivoEntrada.close();
-			std::cout << "[NIVEL] Mapa Andes cargado desde nivel4.dat" << std::endl;
 		} else {
-			std::cerr << "[ERROR] No se encontro nivel4.dat." << std::endl;
 			inicializarMapaVacio();
 		}
 		
-		// 2. BUSCAR ENTIDADES EN EL MAPA
 		bool heroeEncontrado = false;
-		
 		for (int y = 0; y < 20; y++) {
 			for (int x = 0; x < 30; x++) {
 				int idCelda = getContenidoCelda(x, y);
 				
-				if (idCelda == 2) { // San Martín
+				if (idCelda == 2) { 
 					setHeroe(new SanMartin(x, y, 2)); 
 					agregarEntidad(getHeroe());
-					setCelda(x, y, 0); // Convertimos en piso
+					setCelda(x, y, 0); 
 					heroeEncontrado = true;
 				}
-				else if (idCelda == 6) { // NUEVO: ¡Aparecen las curas!
+				else if (idCelda == 6) { 
 					agregarEntidad(new Item(x, y, "ITEM_CURACION"));
-					setCelda(x, y, 0); // Lo volvemos piso (el objeto visual queda flotando)
+					setCelda(x, y, 0); 
 				}
-				// La salida (4) y las paredes (1) quedan intactas en el mapa
 			}
 		}
 		
-		// 3. PARCHE ANTI-CRASHEO
 		if (!heroeEncontrado) {
-			std::cout << "[ALERTA] Forzando spawn de San Martin en el medio." << std::endl;
 			setHeroe(new SanMartin(15, 10, 2)); 
 			agregarEntidad(getHeroe());
 		}
+	}
+	
+	int getTiempoRestante() override { return tiempoRestante; }
+	
+	int getCurasRestantes() override {
+		int contador = 0;
+		for (Entidad* e : getEntidades()) {
+			// Si la entidad está viva y es una cura, la sumamos al contador
+			if (e->estaVivo() && e->getTipo() == "ITEM_CURACION") {
+				contador++;
+			}
+		}
+		return contador;
 	}
 	
 	void actualizar() override {
@@ -69,12 +82,24 @@ public:
 			if (e->estaVivo()) e->actualizar();
 		}
 		
-		// Verificamos si pisó la zona dorada de victoria (SALIDA_NIVEL = 4)
 		if (getHeroe() && getHeroe()->estaVivo()) {
+			
+			// --- SISTEMA DE FRÍO EXTREMO ---
+			framesFrio++;
+			if (framesFrio >= 60) { 
+				framesFrio = 0;
+				tiempoRestante--;
+				getHeroe()->recibirDanio(5.0f); // Resta 1 HP por segundo
+				
+				if (tiempoRestante <= 0) {
+					getHeroe()->recibirDanio(999.0f); // Muerte por tiempo
+				}
+			}
+			
 			int hx = (int)getHeroe()->getX();
 			int hy = (int)getHeroe()->getY();
 			if (hx >= 0 && hx < 30 && hy >= 0 && hy < 20) {
-				if (getContenidoCelda(hx, hy) == SALIDA_NIVEL) {
+				if (getContenidoCelda(hx, hy) == SALIDA_NIVEL || getContenidoCelda(hx, hy) == 4) {
 					setCompletado(true);
 				}
 			}

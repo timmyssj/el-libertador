@@ -81,9 +81,9 @@ public:
 	void limpiarCinematica() { mensajeCinematica = ""; }
 	bool enCinematica() { return mensajeCinematica != ""; }
 	
-	// --- NUEVO: RELOJ DEL HUD ---
-	// Devuelve -1 si el nivel es normal. Los niveles con tiempo (como Andes) la sobrescribirán.
+	// --- NUEVO: SISTEMA DE HUD (Andes) ---
 	virtual int getTiempoRestante() { return -1; }
+	virtual int getCurasRestantes() { return -1; }
 };
 
 #endif

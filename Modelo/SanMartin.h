@@ -9,12 +9,9 @@
 
 class SanMartin : public Personaje {
 private:
-	int idTraje; // 0 = Tutorial, 1 = España, 2 = San Lorenzo/Andes
+	int idTraje; 
 	
-	// Vectores de caminata
 	std::vector<sf::Texture> animDerecha, animIzquierda, animArriba, animAbajo;  
-	
-	// Vectores de ataque (Estandarizados como "atk")
 	std::vector<sf::Texture> atkDerecha, atkIzquierda, atkArriba, atkAbajo; 
 	
 	bool tieneSable;
@@ -22,23 +19,18 @@ private:
 public:
 	SanMartin(float x, float y, int traje = 0) : Personaje(x, y, 100, 6) {
 		idTraje = traje;
-		// Si es el traje 0 (Tutorial), no tiene sable. En los demás niveles ya lo trae.
 		tieneSable = (idTraje != 0); 
 		cargarTextura();
 	}
 	
 	std::string getTipo() override { return "PROCER"; }
 	
-	// --- FUNCIÓN RECUPERADA: Lista para el futuro ---
-	// Si hoy le pasas '1', carga 1 sprite. Si mañana tienes 4, le pasas '4' y listo.
 	void cargarSecuencia(std::vector<sf::Texture>& vector, std::string nombreBase, int cantidad) {
 		for (int i = 1; i <= cantidad; i++) {
 			sf::Texture t;
-			// Primero intenta cargar "nombre_1.png"
 			if (t.loadFromFile("sprites/" + nombreBase + "_" + std::to_string(i) + ".png")) {
 				vector.push_back(t);
 			} 
-			// Si no existe, intenta cargar "nombre.png" (como respaldo para tus sprites actuales)
 			else if (t.loadFromFile("sprites/" + nombreBase + ".png")) {
 				vector.push_back(t);
 			}
@@ -48,12 +40,10 @@ public:
 	void cargarTextura() override {
 		std::string prefijo = "";
 		
-		// CORRECCIÓN: Usamos idTraje
 		if (idTraje == 0) prefijo = "san_martin_espana"; 
-		else if (idTraje == 1) prefijo = "san_martin_espana";          
+		else if (idTraje == 1) prefijo = "san_martin_espana";           
 		else if (idTraje == 2) prefijo = "san_martin"; 
 		
-		// Pasamos el número '1' para mantener tu lógica de un solo sprite
 		cargarSecuencia(animDerecha, prefijo + "_derecho", 1);
 		cargarSecuencia(animIzquierda, prefijo + "_izquierdo", 1);
 		cargarSecuencia(animArriba, prefijo + "_atras", 1);
@@ -78,7 +68,6 @@ public:
 			case ARRIBA:    setOffsetX(0); setOffsetY(-desplazamiento); break;
 			}
 			
-			// CORRECCIÓN: Usamos los vectores atk directamente
 			std::vector<sf::Texture>* animActiva = nullptr;
 			switch (getDireccion()) {
 			case DERECHA:   animActiva = &atkDerecha; break;
@@ -105,7 +94,6 @@ public:
 	bool tieneSableEquipado(){ return tieneSable;}
 	
 	void atacar(const std::vector<Entidad*>& mapaEntidades) {
-		// --- NUEVO: Si no tiene el sable equipado, bloqueamos el ataque ---
 		if (!tieneSable) return; 
 		
 		float targetX = getX();
@@ -135,12 +123,9 @@ public:
 			}
 		}
 		
-		// --- NUEVO: LE AVISAMOS AL MOTOR QUE TIRAMOS UN SABLAZO PARA EL SONIDO ---
 		registrarAtaque();
 		setTimerAtaque(12); 
 	}
-	
-	
 };
 
 #endif
