@@ -6,7 +6,7 @@
 #include <string>
 #include <iostream>
 #include <algorithm> 
-#include <cstdlib> // <-- NUEVO: Para el efecto aleatorio de la nieve
+#include <cstdlib> 
 #include "../Modelo/juego.h" 
 
 class VentanaPrincipal {
@@ -15,28 +15,17 @@ private:
 	Juego* modelo; 
 	sf::Font fuente; 
 	
-	sf::Texture texSanMartin;
-	sf::Texture texEnemigo;
-	sf::Texture texGranadero;
-	sf::Texture texSuelo;
-	sf::Texture texPared;
-	
 	sf::Texture texRocaNieve;
 	sf::Sprite spriteRocaNieve;
-	
 	sf::Texture texturaFondoMenu;
 	sf::Sprite spriteFondoMenu;
 	
 	std::string fondoActualCargado;
 	sf::Texture texturaFondoNivel;
 	sf::Sprite spriteFondoNivel;
-	
 	sf::View camara;
 	
-	// --- ESTRUCTURA DE LA NIEVE ---
-	struct CopoNieve {
-		float x, y, velY, velX;
-	};
+	struct CopoNieve { float x, y, velY, velX; };
 	std::vector<CopoNieve> copos;
 	
 public:
@@ -45,7 +34,6 @@ public:
 		ventana.setFramerateLimit(60);
 		
 		fondoActualCargado = ""; 
-		
 		if (!fuente.loadFromFile("PressStart2P.ttf")) { }
 		
 		if (!texRocaNieve.loadFromFile("sprites/roca_nieve.png")) {
@@ -66,13 +54,10 @@ public:
 		camara.setSize((float)ventana.getSize().x, (float)ventana.getSize().y);
 		camara.zoom(0.6f);
 		
-		// Generamos 300 copos de nieve al arrancar
 		for (int i = 0; i < 300; i++) {
 			copos.push_back({
-				(float)(rand() % 1100),       // X aleatoria
-				 (float)(rand() % 600),        // Y aleatoria
-				  (float)(rand() % 3 + 2),      // Velocidad vertical
-				   (float)((rand() % 3) - 1)     // Viento lateral
+				(float)(rand() % 1100), (float)(rand() % 600), 
+										 (float)(rand() % 3 + 2), (float)((rand() % 3) - 1) 
 			});
 		}
 	}
@@ -154,16 +139,22 @@ private:
 				
 				if (modelo->getNivelActual() != nullptr) {
 					if (modelo->getNivelActual()->enCinematica()) {
-						sf::RectangleShape fondoOscuro(sf::Vector2f(ventana.getSize().x, ventana.getSize().y));
-						fondoOscuro.setFillColor(sf::Color(0, 0, 0, 220)); 
+						static sf::RectangleShape fondoOscuro;
+						if (fondoOscuro.getSize().x == 0) {
+							fondoOscuro.setSize(sf::Vector2f(ventana.getSize().x, ventana.getSize().y));
+							fondoOscuro.setFillColor(sf::Color(0, 0, 0, 220)); 
+						}
 						ventana.draw(fondoOscuro);
 						dibujarTexto("MOMENTO HISTORICO", 550, 150, sf::Color::Yellow, 24);
 						dibujarTexto(modelo->getNivelActual()->getMensajeCinematica(), 550, 320, sf::Color::White, 12);
 						dibujarTexto("Presiona ENTER para continuar", 550, 500, sf::Color::Cyan, 12);
 					}
 					else if (modelo->getNivelActual()->estaCompletado()) {
-						sf::RectangleShape fondoOscuro(sf::Vector2f(ventana.getSize().x, ventana.getSize().y));
-						fondoOscuro.setFillColor(sf::Color(0, 0, 0, 180)); 
+						static sf::RectangleShape fondoOscuro;
+						if (fondoOscuro.getSize().x == 0) {
+							fondoOscuro.setSize(sf::Vector2f(ventana.getSize().x, ventana.getSize().y));
+							fondoOscuro.setFillColor(sf::Color(0, 0, 0, 180)); 
+						}
 						ventana.draw(fondoOscuro);
 						dibujarTexto("¡VICTORIA!", 550, 200, sf::Color::Green, 60);
 						dibujarTexto("Has asegurado la posicion.", 550, 320, sf::Color::White, 20);
@@ -172,13 +163,21 @@ private:
 					else {
 						if (modelo->getNivelActual()->getHeroe()) {
 							int vida = modelo->getNivelActual()->getHeroe()->getVida();
-							sf::RectangleShape fondoBarra(sf::Vector2f(200, 20)); 
-							fondoBarra.setPosition(50, 30); fondoBarra.setFillColor(sf::Color(50, 0, 0));
-							fondoBarra.setOutlineThickness(2); fondoBarra.setOutlineColor(sf::Color::White);
+							
+							static sf::RectangleShape fondoBarra(sf::Vector2f(200, 20)); 
+							static sf::RectangleShape barraActual;
+							static bool initHud = false;
+							if(!initHud){
+								fondoBarra.setPosition(50, 30); fondoBarra.setFillColor(sf::Color(50, 0, 0));
+								fondoBarra.setOutlineThickness(2); fondoBarra.setOutlineColor(sf::Color::White);
+								barraActual.setPosition(50, 30);
+								initHud = true;
+							}
+							
 							ventana.draw(fondoBarra);
 							
 							float porcentaje = (float)vida / 100.0f; if (porcentaje < 0) porcentaje = 0;
-							sf::RectangleShape barraActual(sf::Vector2f(200 * porcentaje, 20)); barraActual.setPosition(50, 30);
+							barraActual.setSize(sf::Vector2f(200 * porcentaje, 20));
 							if (vida > 50) barraActual.setFillColor(sf::Color::Green); 
 							else if (vida > 25) barraActual.setFillColor(sf::Color::Yellow); 
 							else barraActual.setFillColor(sf::Color::Red);
@@ -189,13 +188,13 @@ private:
 						
 						int tiempo = modelo->getNivelActual()->getTiempoRestante();
 						if (tiempo != -1) {
-							sf::Color colorReloj = (tiempo <= 30) ? sf::Color::Red : sf::Color::Red;
-							dibujarTexto("TIEMPO: " + std::to_string(tiempo), 900, 40, colorReloj, 20);
+							sf::Color colorReloj = (tiempo <= 30) ? sf::Color::Red : sf::Color::White;
+							dibujarTexto("TIEMPO: " + std::to_string(tiempo), 550, 40, colorReloj, 20);
 							int curas = modelo->getNivelActual()->getCurasRestantes();
-							dibujarTexto("CURAS: " + std::to_string(curas) + "/4", 900, 70, sf::Color::Cyan, 16);
+							dibujarTexto("CURAS: " + std::to_string(curas) + "/4", 900, 40, sf::Color::Cyan, 16);
 						}
 						
-						sf::RectangleShape panelInstrucciones(sf::Vector2f(800, 50));
+						static sf::RectangleShape panelInstrucciones(sf::Vector2f(800, 50));
 						panelInstrucciones.setPosition(0, 550); panelInstrucciones.setFillColor(sf::Color(0, 0, 0, 150));
 						ventana.draw(panelInstrucciones);
 						
@@ -213,7 +212,9 @@ private:
 			}
 			else if (estado == PAUSA) {
 				dibujarJuego(); 
-				sf::RectangleShape fondoOscuro(sf::Vector2f(1100, 600)); fondoOscuro.setFillColor(sf::Color(0, 0, 0, 150)); ventana.draw(fondoOscuro);
+				static sf::RectangleShape fondoOscuro(sf::Vector2f(1100, 600)); 
+				fondoOscuro.setFillColor(sf::Color(0, 0, 0, 150)); 
+				ventana.draw(fondoOscuro);
 				dibujarTexto("JUEGO PAUSADO", 550, 100, sf::Color::Yellow, 30); dibujarMenuGenerico(modelo->getMenuPausa(), 550, 300);
 			}
 			else if (estado == CONFIGURACION) {
@@ -261,16 +262,22 @@ private:
 				}
 			}
 			
+			static sf::RectangleShape celdaOro;
+			static bool initOro = false;
+			if(!initOro){
+				celdaOro.setFillColor(sf::Color(255, 215, 0, 100)); 
+				celdaOro.setOutlineColor(sf::Color(40, 40, 40)); 
+				celdaOro.setOutlineThickness(1); 
+				initOro = true;
+			}
+			celdaOro.setSize(sf::Vector2f(bloqueX, bloqueY));
+			
 			for (int i = 0; i < 20; i++) {       
 				for (int j = 0; j < 30; j++) {   
 					int contenido = 0; if (modelo->getNivelActual()) contenido = modelo->getNivelActual()->getContenidoCelda(j, i);
-					
-					// Dibujamos solo la salida dorada
 					if (contenido == 4) { 
-						sf::RectangleShape celda(sf::Vector2f(bloqueX, bloqueY)); celda.setPosition(j * bloqueX, i * bloqueY);
-						celda.setFillColor(sf::Color(255, 215, 0, 100)); 
-						celda.setOutlineColor(sf::Color(40, 40, 40)); 
-						celda.setOutlineThickness(1); ventana.draw(celda);
+						celdaOro.setPosition(j * bloqueX, i * bloqueY);
+						ventana.draw(celdaOro);
 					} 
 				}
 			}
@@ -278,24 +285,29 @@ private:
 			if (modelo->getNivelActual()) {
 				const std::vector<Entidad*>& entidades = modelo->getNivelActual()->getEntidades();
 				
+				// Sombra reciclable para las rocas
+				static sf::CircleShape sombraRoca(10.f);
+				static bool initSombraRoca = false;
+				if(!initSombraRoca){
+					sombraRoca.setFillColor(sf::Color(0, 0, 0, 120)); 
+					sombraRoca.setScale(1.0f, 0.4f); 
+					initSombraRoca = true;
+				}
+				sombraRoca.setRadius(bloqueX * 0.35f);
+				
 				for (int fila = 0; fila < 20; fila++) {
-					// PASADA 1: Planos
 					for (Entidad* e : entidades) {
 						if (!e->estaVivo()) continue;
 						if ((int)e->getY() == fila && e->getTipo() != "ARBOL" && e->getTipo() != "OBSTACULO_CONVENTO") {
 							dibujarEntidadUnica(e, bloqueX, bloqueY);
 						}
 					}
-					
-					// PASADA 2: Obstáculos Altos
 					for (Entidad* e : entidades) {
 						if (!e->estaVivo()) continue;
 						if ((int)e->getY() == fila && (e->getTipo() == "ARBOL" || e->getTipo() == "OBSTACULO_CONVENTO")) {
 							dibujarEntidadUnica(e, bloqueX, bloqueY);
 						}
 					}
-					
-					// PASADA 3: Dibujar Rocas Nevadas (5)
 					for (int col = 0; col < 30; col++) {
 						if (modelo->getNivelActual()->getContenidoCelda(col, fila) == 5) {
 							if (texRocaNieve.getSize().x > 0) {
@@ -303,18 +315,13 @@ private:
 								float escalaX = (bloqueX / texRocaNieve.getSize().x) * factorEscala;
 								float escalaY = (bloqueY / texRocaNieve.getSize().y) * factorEscala;
 								spriteRocaNieve.setScale(escalaX, escalaY);
-								
 								float anchoSprite = spriteRocaNieve.getGlobalBounds().width;
 								float altoSprite = spriteRocaNieve.getGlobalBounds().height;
-								
 								float posX = (col * bloqueX) + (bloqueX / 2) - (anchoSprite / 2);
 								float posY = (fila * bloqueY) + bloqueY - altoSprite + 10.0f; 
 								
-								sf::CircleShape sombra(bloqueX * 0.35f); 
-								sombra.setFillColor(sf::Color(0, 0, 0, 120)); 
-								sombra.setScale(1.0f, 0.4f); 
-								sombra.setPosition((col * bloqueX) + (bloqueX / 2) - sombra.getGlobalBounds().width / 2, (fila * bloqueY) + bloqueY - sombra.getGlobalBounds().height);
-								ventana.draw(sombra);
+								sombraRoca.setPosition((col * bloqueX) + (bloqueX / 2) - sombraRoca.getGlobalBounds().width / 2, (fila * bloqueY) + bloqueY - sombraRoca.getGlobalBounds().height);
+								ventana.draw(sombraRoca);
 								
 								spriteRocaNieve.setPosition(posX, posY);
 								ventana.draw(spriteRocaNieve);
@@ -324,31 +331,22 @@ private:
 				}
 			}
 			
-			if (modelo->getNivelActual() != nullptr && modelo->getNivelActual()->enCinematica()) {
-				sf::RectangleShape fondoOscuro(sf::Vector2f(ventana.getSize().x, ventana.getSize().y));
-				fondoOscuro.setFillColor(sf::Color(0, 0, 0, 220)); 
-				ventana.draw(fondoOscuro);
-				dibujarTexto("MOMENTO HISTÓRICO", 550, 150, sf::Color::Yellow, 24);
-				dibujarTexto(modelo->getNivelActual()->getMensajeCinematica(), 550, 320, sf::Color::White, 14);
-				dibujarTexto("Presiona ENTER para continuar", 550, 500, sf::Color::Cyan, 12);
-			}
-			
-			// Restauramos la vista para dibujar efectos que cubran toda la pantalla
 			ventana.setView(ventana.getDefaultView());
 			
-			// --- EFECTO VISUAL DE NIEVE ---
+			// --- OPTIMIZACIÓN DEL EFECTO DE NIEVE ---
 			if (modelo->getNivelActual() && modelo->getNivelActual()->getArchivoFondo() == "fondos/andes.jpg") {
-				sf::CircleShape copoShape(2.0f);
-				copoShape.setFillColor(sf::Color(255, 255, 255, 200));
+				// Reemplazamos los círculos pesados por Cuadrados Ligeros (sf::RectangleShape)
+				static sf::RectangleShape copoShape(sf::Vector2f(4.0f, 4.0f)); 
+				static bool initNieve = false;
+				if(!initNieve) {
+					copoShape.setFillColor(sf::Color(255, 255, 255, 200));
+					initNieve = true;
+				}
 				
 				for (auto& c : copos) {
 					c.y += c.velY;
 					c.x += c.velX;
-					
-					if (c.y > 600) {
-						c.y = -10;
-						c.x = (float)(rand() % 1100);
-					}
+					if (c.y > 600) { c.y = -10; c.x = (float)(rand() % 1100); }
 					if (c.x < 0) c.x = 1100;
 					if (c.x > 1100) c.x = 0;
 					
@@ -362,13 +360,44 @@ private:
 			sf::Sprite* spritePtr = e->getSpriteRender();
 			if (!spritePtr) return;
 			
-			sf::CircleShape sombra(bloqueX * 0.35f); 
-			sombra.setFillColor(sf::Color(0, 0, 0, 120)); 
-			sombra.setScale(1.0f, 0.4f); 
+			// --- OPTIMIZACIÓN DE SOMBRAS Y BARRAS ---
+			static sf::CircleShape sombra(10.f);
+			static sf::RectangleShape fondoBarra;
+			static sf::RectangleShape barraVerde;
+			static sf::RectangleShape sableHolo;
+			static sf::RectangleShape curaHolo;
+			static bool initShapes = false;
+			
+			if(!initShapes){
+				sombra.setFillColor(sf::Color(0, 0, 0, 120)); sombra.setScale(1.0f, 0.4f); 
+				fondoBarra.setFillColor(sf::Color::Red); fondoBarra.setOutlineThickness(1); fondoBarra.setOutlineColor(sf::Color::Black);
+				barraVerde.setFillColor(sf::Color::Green);
+				
+				sableHolo.setFillColor(sf::Color::Yellow);
+				curaHolo.setFillColor(sf::Color::White); curaHolo.setOutlineThickness(2.0f); curaHolo.setOutlineColor(sf::Color::Red);
+				
+				initShapes = true;
+			}
+			
+			sombra.setRadius(bloqueX * 0.35f);
 			float sombraX = (e->getX() * bloqueX) + (bloqueX / 2) - sombra.getGlobalBounds().width / 2;
 			float sombraY = (e->getY() * bloqueY) + bloqueY - sombra.getGlobalBounds().height;
 			sombra.setPosition(sombraX, sombraY);
 			ventana.draw(sombra);
+			
+			if (spritePtr->getTexture() == nullptr) {
+				if (e->getTipo() == "ITEM_SABLE") {
+					sableHolo.setSize(sf::Vector2f(bloqueX * 0.8f, 6.0f));
+					sableHolo.setPosition((e->getX() * bloqueX) + (bloqueX * 0.1f), (e->getY() * bloqueY) + bloqueY - 10.0f);
+					ventana.draw(sableHolo);
+				} 
+				else if (e->getTipo() == "ITEM_CURACION") {
+					curaHolo.setSize(sf::Vector2f(bloqueX * 0.5f, bloqueY * 0.5f));
+					curaHolo.setPosition((e->getX() * bloqueX) + (bloqueX * 0.25f), (e->getY() * bloqueY) + (bloqueY * 0.5f));
+					ventana.draw(curaHolo);
+				}
+				return; 
+			}
 			
 			Personaje* p = dynamic_cast<Personaje*>(e);
 			float factorEscala = 1.5f; 
@@ -411,16 +440,21 @@ private:
 				float anchoBarra = bloqueX * 0.8f; float altoBarra = 6.0f;            
 				float porcentajeVida = p->getVida() / p->getVidaMax();
 				if (porcentajeVida < 0) porcentajeVida = 0;
-				sf::RectangleShape fondoBarra(sf::Vector2f(anchoBarra, altoBarra)); fondoBarra.setFillColor(sf::Color::Red);
+				
+				fondoBarra.setSize(sf::Vector2f(anchoBarra, altoBarra));
+				barraVerde.setSize(sf::Vector2f(anchoBarra * porcentajeVida, altoBarra));
+				
 				float barraX = (e->getX() * bloqueX) + (bloqueX / 2) - (anchoBarra / 2); float barraY = posY - 8.0f; 
-				fondoBarra.setPosition(barraX, barraY); fondoBarra.setOutlineThickness(1); fondoBarra.setOutlineColor(sf::Color::Black);
-				sf::RectangleShape barraVerde(sf::Vector2f(anchoBarra * porcentajeVida, altoBarra)); barraVerde.setFillColor(sf::Color::Green);
-				barraVerde.setPosition(barraX, barraY); ventana.draw(fondoBarra); ventana.draw(barraVerde);
+				fondoBarra.setPosition(barraX, barraY); 
+				barraVerde.setPosition(barraX, barraY); 
+				
+				ventana.draw(fondoBarra); ventana.draw(barraVerde);
 			}
 		}
 		
 		void dibujarTexto(std::string mensaje, float x, float y, sf::Color color, int tam) {
-			sf::Text texto; texto.setFont(fuente); texto.setString(mensaje); texto.setCharacterSize(tam); texto.setFillColor(color);
+			static sf::Text texto; // Reutilizamos el objeto de texto
+			texto.setFont(fuente); texto.setString(mensaje); texto.setCharacterSize(tam); texto.setFillColor(color);
 			sf::FloatRect bounds = texto.getLocalBounds(); texto.setOrigin(bounds.width / 2, bounds.height / 2);
 			texto.setPosition(x, y); ventana.draw(texto);
 		}

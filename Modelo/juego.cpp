@@ -46,8 +46,6 @@ Juego::~Juego() {
 	if (nivelActual) delete nivelActual;
 }
 
-// --- ARCHIVOS BINARIOS ---
-
 void Juego::guardarProgreso() {
 	std::ofstream archivo("progreso.dat", std::ios::binary);
 	if (archivo.is_open()) {
@@ -71,8 +69,6 @@ void Juego::cargarProgreso() {
 	}
 }
 
-// -------------------------
-
 void Juego::procesarTeclaArriba() {
 	if (estadoActual == EN_MENU) menuPrincipal->moverArriba();
 	else if (estadoActual == SELECCION_NIVEL) menuNiveles->moverArriba();
@@ -80,7 +76,6 @@ void Juego::procesarTeclaArriba() {
 	else if (estadoActual == CONFIGURACION) menuConfig->moverArriba();
 	else if (estadoActual == JUGANDO && nivelActual != nullptr) {
 		if (nivelActual->estaCompletado()) return; 
-		
 		SanMartin* heroe = nivelActual->getHeroe();
 		if (heroe) {
 			heroe->setDireccion(ARRIBA); 
@@ -303,32 +298,36 @@ void Juego::actualizar() {
 			sonidoAtaque.play();
 		}
 		
-		// --- 3. SISTEMA DE RECOLECCIÓN DE ITEMS ---
+		// --- SISTEMA DE RECOLECCIÓN DE ITEMS A PRUEBA DE FALLOS ---
 		if (heroe && heroe->estaVivo()) {
 			for (Entidad* e : nivelActual->getEntidades()) {
 				
-				// Chequeamos que esté vivo y sea una cura o sable
 				if (e->estaVivo() && (e->getTipo() == "ITEM_CURACION" || e->getTipo() == "ITEM_SABLE")) {
 					
-					// Calculamos distancia real (Hitbox generosa de 1.2 bloques)
-					float dx = e->getX() - heroe->getX();
-					float dy = e->getY() - heroe->getY();
-					float distancia = std::sqrt(dx*dx + dy*dy);
+					float difX = std::abs(e->getX() - heroe->getX());
+					float difY = std::abs(e->getY() - heroe->getY());
 					
-					if (distancia <= 1.2f) { 
-						Item* item = dynamic_cast<Item*>(e);
+					// RASTREADOR: Si estás a menos de 3 bloques, la consola te avisa
+					if (difX <= 3.0f && difY <= 3.0f) {
+						// Puedes ver este mensaje en la ventanita negra al acercarte
+						// std::cout << "Cerca del item. Distancia X:" << difX << " Y:" << difY << std::endl;
+					}
+					
+					// Hitbox cuadrada súper amplia (1.2 bloques)
+					if (difX <= 1.2f && difY <= 1.2f) {
 						
-						if (item) {
-							if (item->getTipo() == "ITEM_SABLE") {
-								heroe->equiparSable();
-								item->recoger();
-								std::cout << "[SISTEMA] Sable Corvo obtenido." << std::endl;
-							} 
-							else if (item->getTipo() == "ITEM_CURACION") {
-								heroe->curar(10.0f); // Sube 10 de vida
-								item->recoger();     // Desaparece del mapa
-								std::cout << "[SISTEMA] ¡Cura agarrada! Vida: " << heroe->getVida() << std::endl;
-							}
+						// Usamos static_cast (a la fuerza bruta) para evitar errores del motor
+						Item* item = static_cast<Item*>(e);
+						
+						if (item->getTipo() == "ITEM_SABLE") {
+							heroe->equiparSable();
+							item->recoger();
+							std::cout << "[SISTEMA] Sable recogido exitosamente." << std::endl;
+						} 
+						else if (item->getTipo() == "ITEM_CURACION") {
+							heroe->curar(10.0f);
+							item->recoger();
+							std::cout << "[SISTEMA] Curacion recogida! Vida: " << heroe->getVida() << std::endl;
 						}
 					}
 				}

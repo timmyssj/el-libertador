@@ -57,17 +57,21 @@ bool Nivel::hayEnemigosVivos() {
 	return false; // Solo devuelve false si limpiaste todo
 }
 bool Nivel::esCeldaOcupada(int x, int y) {
+	// ... (Acá arriba seguramente tenés los chequeos de los bordes del mapa o celdas de pared) ...
+	
 	for (Entidad* e : entidades) {
-		// Si la entidad está viva Y está en la posición que preguntamos
 		if (e->estaVivo() && (int)e->getX() == x && (int)e->getY() == y) {
 			
-			// Excepción: No chocamos con nosotros mismos (San Martín)
-			if (e->getTipo() == "PROCER") continue; 
+			// --- ¡LA MAGIA QUE FALTA ESTÁ ACÁ! ---
+			// Le decimos al motor que si la entidad empieza con la palabra "ITEM", sea un fantasma atravesable
+			if (e->getTipo() == "ITEM_SABLE" || e->getTipo() == "ITEM_CURACION") {
+				continue; // Ignora esta entidad y deja que San Martín la pise
+			}
+			// ------------------------------------
 			
-			// Si es un Muñeco o un Enemigo, la celda está ocupada
-			return true;
+			return false; // Si llegamos acá, chocaste con un árbol o enemigo
 		}
 	}
-	return false; // Está libre
+	return true;
 }
 

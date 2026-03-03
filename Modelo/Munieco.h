@@ -6,32 +6,33 @@
 
 class Munieco : public Personaje {
 private:
-	sf::Texture texturaMunieco;
+	static sf::Texture& getTexturaEstatica() {
+		static sf::Texture tex;
+		static bool cargada = false;
+		if (!cargada) {
+			if (!tex.loadFromFile("sprites/munieco.png")) {
+				if (!tex.loadFromFile("sprites/realista_frente.png")) {
+					std::cerr << "Falta imagen para el Munieco" << std::endl;
+				}
+			}
+			cargada = true;
+		}
+		return tex;
+	}
 	
 public:
-	Munieco(float x, float y) : Personaje(x, y, 30, 999) { 
-		cargarTextura();
-	}
-	
-	std::string getTipo() override { return "PRACTICA"; }
-	
-	void cargarTextura() override {
-		if (!texturaMunieco.loadFromFile("sprites/munieco.png")) {
-			if (texturaMunieco.loadFromFile("sprites/realista_frente.png")) {
-				// CORRECCIÓN AQUÍ: Usamos getSprite()
-				getSprite().setColor(sf::Color(139, 69, 19)); 
-			} else {
-				std::cerr << "Falta imagen para el Munieco" << std::endl;
-			}
+		Munieco(float x, float y) : Personaje(x, y, 30, 999) { 
+			cargarTextura();
 		}
 		
-		// CORRECCIÓN AQUÍ: Usamos getSprite()
-		getSprite().setTexture(texturaMunieco);
-	}
-	
-	void actualizar() override {
-		// Estático
-	}
+		std::string getTipo() override { return "PRACTICA"; }
+		
+		void cargarTextura() override {
+			getSprite().setTexture(getTexturaEstatica());
+			getSprite().setColor(sf::Color(139, 69, 19)); // Color madera constante
+		}
+		
+		void actualizar() override { }
 };
 
 #endif

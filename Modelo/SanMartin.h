@@ -114,7 +114,7 @@ public:
 				float dy = e->getY() - targetY;
 				float dist = std::sqrt(dx*dx + dy*dy);
 				
-				if (dist <= 1.0f) { 
+				if (dist <= 0.8f) { 
 					Personaje* enemigo = dynamic_cast<Personaje*>(e);
 					if (enemigo) {
 						enemigo->recibirDanio(15.0f); 
