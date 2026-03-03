@@ -15,16 +15,16 @@ public:
 		
 		setArchivoFondo("fondos/fondo_nivel_1.png");
 		
-		setTituloIntro("NIVEL 1: BATALLA EN ESPANA");
-		addTextoIntro("Ano 1808. Arjonilla, Espana.");
-		addTextoIntro("Las tropas de Napoleon invaden la peninsula.");
-		addTextoIntro("El joven Capitan San Martin lucha junto\nal ejercito espanol.");
-		addTextoIntro("Mision: Emboscar a la patrulla francesa.");
+		setTituloIntro("NIVEL 1: BATALLA EN ESPAÑA");
+		addTextoIntro("Año 1808. Arjonilla, España.");
+		addTextoIntro("Las tropas de Napoleón invaden la península.");
+		addTextoIntro("El joven Capitán San Martín lucha junto\nal ejército español.");
+		addTextoIntro("Misión: Emboscar a la patrulla francesa.");
 		cargarContenido();
 	}
 	
 	std::string getObjetivo() override { 
-		return "OBJETIVO: Elimina a los realistas y ve a la salida"; 
+		return "OBJETIVO: Elimina a los franceses y ve a la salida"; 
 	}
 	
 	void cargarContenido() override {

@@ -25,11 +25,11 @@ public:
 		
 		setTituloIntro("NIVEL 2: SAN LORENZO");
 		addTextoIntro("3 de Febrero de 1813. Provincia de Santa Fe.");
-		addTextoIntro("Una expedicion realista desembarca cerca\n\ndel Convento de San Carlos.");
-		addTextoIntro("El Coronel San Martin los espera oculto\n\ncon su nuevo regimiento:");
+		addTextoIntro("Una expedición realista desembarca cerca\n\ndel Convento de San Carlos.");
+		addTextoIntro("El Coronel San Martín los espera oculto\n\ncon su nuevo regimiento:");
 		addTextoIntro("Los Granaderos a Caballo.");
 		addTextoIntro("Es su bautismo de fuego en territorio americano.");
-		addTextoIntro("Mision: Rechazar el avance realista hacia el convento.");
+		addTextoIntro("Misión: Rechazar el avance realista hacia el convento.");
 		
 		cargarContenido();
 	}

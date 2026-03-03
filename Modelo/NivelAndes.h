@@ -33,10 +33,10 @@ public:
 		
 		// --- INTRODUCCIÓN CORREGIDA (Estilo Nivel España) ---
 		setTituloIntro("NIVEL 3: CRUCE DE LOS ANDES");
-		addTextoIntro("Ano 1817. Cordillera de los Andes.");
-		addTextoIntro("El Ejercito de los Andes enfrenta su mayor desafio.");
+		addTextoIntro("Año 1817. Cordillera de los Andes.");
+		addTextoIntro("El Ejército de los Andes enfrenta su mayor desafío.");
 		addTextoIntro("A mas de 4000 metros de altura, el frio extremo\ny la falta de oxigeno son letales.");
-		addTextoIntro("Mision: Cruzar el paso en 140s. Recoge botiquines\npara sobrevivir a la hipotermia.");
+		addTextoIntro("Misión: Cruzar el paso en 140s. Recoge botiquines\npara sobrevivir a la hipotermia.");
 		
 		cargarContenido();
 	}

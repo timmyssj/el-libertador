@@ -16,15 +16,15 @@ public:
 		setArchivoFondo("fondos/fondo_tutorial.png");
 		
 		addTextoIntro("25 de Febrero de 1778");
-		addTextoIntro("Jose Francisco de San Martin nace en Yapeyu,\n\nuna antigua mision jesuitica a orillas del rio Uruguay,\n\nen la actual provincia de Corrientes.");
-		addTextoIntro("Traslado a Espana, 1783-1785");
-		addTextoIntro("Alli, el joven Jose comenzo sus estudios primarios \n\nen la Escuela de Temporalidades de Malaga,\n\ndonde recibio una educacion basica en letras,\n\nmatematicas y rudimentos de humanidades.");
+		addTextoIntro("Jose Francisco de San Martín nace en Yapeyú,\n\nuna antigua misión jesuítica a orillas del río Uruguay,\n\nen la actual provincia de Corrientes.");
+		addTextoIntro("Traslado a España, 1783-1785");
+		addTextoIntro("Alli, el joven José comenzó sus estudios primarios \n\nen la Escuela de Temporalidades de Málaga,\n\ndonde recibió una educación básica en letras,\n\nmatemáticas y rudimentos de humanidades.");
 		addTextoIntro("Ingreso a la Escuela Militar: El Cadete de Murcia");
-		addTextoIntro("Apodado 'El Leal', San Martin forjo un caracter metodico \n\ny disciplinado.");
-		addTextoIntro("Durante estos anos:\n");
-		addTextoIntro("Estudio tactica militar, matematicas aplicadas a balistica\n\ny geografia.");
-		addTextoIntro("Aprendio frances,\n\nlo que le permitio acceder a la literatura de la Ilustracion\n\ny a los manuales militares de Napoleon mas adelante.\n\n");
-		addTextoIntro("Ascendio rapidamente gracias a su valor en combate;\n\na los 15 anos ya era Segundo Subteniente.");
+		addTextoIntro("Apodado 'El Leal', San Martin forjó un caracter metódico \n\ny disciplinado.");
+		addTextoIntro("Durante estos años:\n");
+		addTextoIntro("Estudio táctica militar, matemáticas aplicadas a balística\n\ny geografáa.");
+		addTextoIntro("Aprendio francés,\n\nlo que le permitió acceder a la literatura de la Ilustración\n\ny a los manuales militares de Napoleon mas adelante.\n\n");
+		addTextoIntro("Ascendió rápidamente gracias a su valor en combate;\n\na los 15 anos ya era Segundo Subteniente.");
 		setTituloIntro("TUTORIAL");
 		addTextoIntro("w -> arriba\n\na -> izquierda\n\ns -> abajo\n\nd -> derecha\n\nespacio -> atacar");
 		cargarContenido();
