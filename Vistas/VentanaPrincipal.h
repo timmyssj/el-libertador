@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <algorithm> 
+#include <cstdlib> // <-- NUEVO: Para el efecto aleatorio de la nieve
 #include "../Modelo/juego.h" 
 
 class VentanaPrincipal {
@@ -31,6 +32,12 @@ private:
 	sf::Sprite spriteFondoNivel;
 	
 	sf::View camara;
+	
+	// --- ESTRUCTURA DE LA NIEVE ---
+	struct CopoNieve {
+		float x, y, velY, velX;
+	};
+	std::vector<CopoNieve> copos;
 	
 public:
 	VentanaPrincipal(Juego* j) : modelo(j) {
@@ -58,6 +65,16 @@ public:
 		
 		camara.setSize((float)ventana.getSize().x, (float)ventana.getSize().y);
 		camara.zoom(0.6f);
+		
+		// Generamos 300 copos de nieve al arrancar
+		for (int i = 0; i < 300; i++) {
+			copos.push_back({
+				(float)(rand() % 1100),       // X aleatoria
+				 (float)(rand() % 600),        // Y aleatoria
+				  (float)(rand() % 3 + 2),      // Velocidad vertical
+				   (float)((rand() % 3) - 1)     // Viento lateral
+			});
+		}
 	}
 	
 	void ejecutar() {
@@ -172,10 +189,10 @@ private:
 						
 						int tiempo = modelo->getNivelActual()->getTiempoRestante();
 						if (tiempo != -1) {
-							sf::Color colorReloj = (tiempo <= 30) ? sf::Color::Red : sf::Color::White;
-							dibujarTexto("TIEMPO: " + std::to_string(tiempo), 550, 40, colorReloj, 20);
+							sf::Color colorReloj = (tiempo <= 30) ? sf::Color::Red : sf::Color::Red;
+							dibujarTexto("TIEMPO: " + std::to_string(tiempo), 900, 40, colorReloj, 20);
 							int curas = modelo->getNivelActual()->getCurasRestantes();
-							dibujarTexto("CURAS: " + std::to_string(curas) + "/4", 900, 40, sf::Color::Cyan, 16);
+							dibujarTexto("CURAS: " + std::to_string(curas) + "/4", 900, 70, sf::Color::Cyan, 16);
 						}
 						
 						sf::RectangleShape panelInstrucciones(sf::Vector2f(800, 50));
@@ -316,7 +333,29 @@ private:
 				dibujarTexto("Presiona ENTER para continuar", 550, 500, sf::Color::Cyan, 12);
 			}
 			
+			// Restauramos la vista para dibujar efectos que cubran toda la pantalla
 			ventana.setView(ventana.getDefaultView());
+			
+			// --- EFECTO VISUAL DE NIEVE ---
+			if (modelo->getNivelActual() && modelo->getNivelActual()->getArchivoFondo() == "fondos/andes.jpg") {
+				sf::CircleShape copoShape(2.0f);
+				copoShape.setFillColor(sf::Color(255, 255, 255, 200));
+				
+				for (auto& c : copos) {
+					c.y += c.velY;
+					c.x += c.velX;
+					
+					if (c.y > 600) {
+						c.y = -10;
+						c.x = (float)(rand() % 1100);
+					}
+					if (c.x < 0) c.x = 1100;
+					if (c.x > 1100) c.x = 0;
+					
+					copoShape.setPosition(c.x, c.y);
+					ventana.draw(copoShape);
+				}
+			}
 		}
 		
 		void dibujarEntidadUnica(Entidad* e, float bloqueX, float bloqueY) {

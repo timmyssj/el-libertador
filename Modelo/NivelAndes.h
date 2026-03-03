@@ -6,11 +6,16 @@
 #include "Item.h"
 #include <fstream>
 #include <iostream>
+#include <SFML/Audio.hpp> 
 
 class NivelAndes : public Nivel {
 private:
 	int framesFrio;
 	int tiempoRestante;
+	
+	sf::SoundBuffer bufferViento;
+	sf::Sound sonidoViento;
+	bool vientoIniciado;
 	
 public:
 	NivelAndes() {
@@ -18,15 +23,32 @@ public:
 		setArchivoFondo("fondos/andes.png"); 
 		framesFrio = 0;
 		tiempoRestante = 140; 
+		vientoIniciado = false;
 		
-		setTituloIntro("EL CRUCE DE LOS ANDES");
-		addTextoIntro("El frio extremo congela la sangre y agota las fuerzas.");
-		addTextoIntro("Tienes 140 segundos antes de morir de hipotermia.");
-		addTextoIntro("La vida baja constantemente. Desviate del camino principal");
-		addTextoIntro("para encontrar suministros (+10 de vida).");
-		addTextoIntro("Encuentra la salida a Chile.");
+		if (bufferViento.loadFromFile("sonidos/viento.wav")) {
+			sonidoViento.setBuffer(bufferViento);
+			sonidoViento.setLoop(true); 
+			sonidoViento.setVolume(50.0f); 
+		}
+		
+		// --- INTRODUCCIÓN CORREGIDA (Estilo Nivel España) ---
+		setTituloIntro("NIVEL 3: CRUCE DE LOS ANDES");
+		addTextoIntro("Ano 1817. Cordillera de los Andes.");
+		addTextoIntro("El Ejercito de los Andes enfrenta su mayor desafio.");
+		addTextoIntro("A mas de 4000 metros de altura, el frio extremo\ny la falta de oxigeno son letales.");
+		addTextoIntro("Mision: Cruzar el paso en 140s. Recoge botiquines\npara sobrevivir a la hipotermia.");
 		
 		cargarContenido();
+	}
+	
+	~NivelAndes() {
+		if (sonidoViento.getStatus() == sf::Sound::Playing) {
+			sonidoViento.stop();
+		}
+	}
+	
+	std::string getObjetivo() override { 
+		return "OBJETIVO: Sobrevive a la hipotermia y ve a la salida"; 
 	}
 	
 	void cargarContenido() override {
@@ -67,7 +89,6 @@ public:
 	int getCurasRestantes() override {
 		int contador = 0;
 		for (Entidad* e : getEntidades()) {
-			// Si la entidad está viva y es una cura, la sumamos al contador
 			if (e->estaVivo() && e->getTipo() == "ITEM_CURACION") {
 				contador++;
 			}
@@ -77,6 +98,11 @@ public:
 	
 	void actualizar() override {
 		if (enCinematica()) return;
+		
+		if (!vientoIniciado) {
+			sonidoViento.play();
+			vientoIniciado = true;
+		}
 		
 		for (Entidad* e : getEntidades()) {
 			if (e->estaVivo()) e->actualizar();
@@ -89,10 +115,12 @@ public:
 			if (framesFrio >= 60) { 
 				framesFrio = 0;
 				tiempoRestante--;
-				getHeroe()->recibirDanio(5.0f); // Resta 1 HP por segundo
+				
+				getHeroe()->recibirDanio(5.0f); 
 				
 				if (tiempoRestante <= 0) {
-					getHeroe()->recibirDanio(999.0f); // Muerte por tiempo
+					getHeroe()->recibirDanio(999.0f); 
+					sonidoViento.stop(); 
 				}
 			}
 			
@@ -101,8 +129,11 @@ public:
 			if (hx >= 0 && hx < 30 && hy >= 0 && hy < 20) {
 				if (getContenidoCelda(hx, hy) == SALIDA_NIVEL || getContenidoCelda(hx, hy) == 4) {
 					setCompletado(true);
+					sonidoViento.stop(); 
 				}
 			}
+		} else {
+			sonidoViento.stop();
 		}
 	}
 };
